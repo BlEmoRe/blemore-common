@@ -30,25 +30,3 @@ def get_blend_indices(y: np.ndarray) -> np.ndarray:
     return np.where((y > 0).sum(axis=1) > 1)[0]
 
 
-# def convert_preds_to_standard(y_pred, index2emotion):
-#     n_samples = y_pred.shape[0]
-#
-#     for i in range(n_samples):
-#         pred_indices = np.nonzero(y_pred[i])[0]
-#         emotion_1 = index2emotion[pred_indices[0]]
-#         emotion_2 = index2emotion[pred_indices[1]]
-#
-#         emotion_1_raw_salience = y_pred[i][pred_indices[0]]
-#         emotion_2_raw_salience = y_pred[i][pred_indices[1]]
-#
-#         if emotion_1_raw_salience - emotion_2_raw_salience:
-#
-#
-#         elif emotion_1_salience - emotion_2_salience:
-#             y_pred[i] = np.zeros_like(y_pred[i])
-#             y_pred[i][pred_indices[1]] = 1
-#         else:
-#             y_pred[i] = np.zeros_like(y_pred[i])
-#             y_pred[i][pred_indices[0]] = 0.5
-#             y_pred[i][pred_indices[1]] = 0.5
-#
