@@ -4,9 +4,9 @@
 
 ### Filename parser
 
-Simple filename parser. Note that it is not necessary to use the filename parser at all, since the filenames and their 
-corresponding labels and other metadata is already available in the train_metadata.csv 
-on [Zenodo](https://zenodo.org/records/15096942).
+Simple filename parser, provided as a convenience. Note that it is not necessary to use the filename parser, since the filenames and their 
+corresponding labels and other metadata is already available in 
+the train_metadata.csv on [Zenodo](https://zenodo.org/records/15096942).
 
 ## Benchmarks 
 
@@ -31,5 +31,5 @@ Running these baselines require:
 
 1. Extracting OpenFace features from the videos.
 2. Aggregating statistical features, and merging with metadata using the script `src/benchmarks/simple/aggregate_data.py` (replace paths appropriately)
-3. Creating the dataset with labels using the script `src/benchmarks/simple/create_train_set.py`.
-4. Training and evaluating the model using the script `src/benchmarks/simple/evaluate.py`.
+3. Creating the dataset with labels using the script `src/benchmarks/simple/create_train_set.py`
+4. Training and evaluating the model using the script `src/benchmarks/simple/evaluate.py`
