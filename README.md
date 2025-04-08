@@ -27,9 +27,9 @@ softmax + KL-divergence objective, evaluated using 5-fold cross-validation.
 * Optimizer: `Adam (lr=0.001, weight_decay=1e-4)`
 * Epochs: `100`
 
-Running these baselines require:
+**Running the baseline code:**
 
-1. Extracting OpenFace features from the videos.
-2. Aggregating statistical features, and merging with metadata using the script `src/benchmarks/simple/aggregate_data.py` (replace paths appropriately)
-3. Creating the dataset with labels using the script `src/benchmarks/simple/create_train_set.py`
-4. Training and evaluating the model using the script `src/benchmarks/simple/evaluate.py`
+1. Extract OpenFace features from the videos.
+2. Aggregate statistical features, and merge with metadata using the script `src/benchmarks/simple/aggregate_data.py` (replace paths appropriately)
+3. Create the dataset with label vectors using the script `src/benchmarks/simple/create_train_set.py`
+4. Train and evaluate the model using the script `src/benchmarks/simple/evaluate.py`
