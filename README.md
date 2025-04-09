@@ -2,6 +2,21 @@
 
 ## Tools 
 
+### Accuracy metrics
+
+We employ two main evaluation metrics: `ACC_presence` and `ACC_salience`.
+
+- `ACC_presence` measures whether the correct label(s) are predicted without errors.
+  A correct prediction must include all present emotions while avoiding false negatives
+  (e.g., predicting only one emotion in a blend) and false positives
+  (e.g., predicting emotions that are not part of the label).
+
+- `ACC_salience` extends `ACC_presence` by considering the relative prominence of each emotion.
+  It evaluates whether the predicted proportions reflect the correct ranking — whether the emotions
+  are equally present or one is more dominant than the other. This metric applies only to blended emotions.
+
+**Simple functions to calculate the accuracy metrics is available in:** `src/tools/accuracy_measures.py`
+
 ### Filename parser
 
 Simple filename parser, provided as a convenience. Note that it is not necessary to use the filename parser, since the filenames and their 
@@ -29,7 +44,11 @@ softmax + KL-divergence objective, evaluated using 5-fold cross-validation.
 
 **Running the baseline code:**
 
-1. Extract OpenFace features from the videos.
-2. Aggregate statistical features, and merge with metadata using the script `src/baselines/simple/aggregate_data.py` (replace paths appropriately)
-3. Create the dataset with label vectors using the script `src/baselines/simple/create_train_set.py`
-4. Train and evaluate the model using the script `src/baselines/simple/evaluate.py`
+
+
+1. Download the data set from [Zenodo](https://zenodo.org/records/15096942)
+2. Extract OpenFace features from the videos and provide the path to the files, along with the train_metadata.csv in 
+`src/baselines/simple/config_simple_baseline.py` 
+3. Aggregate statistical features, and merge with metadata using the script `src/baselines/simple/aggregate_data.py` 
+4. Create the dataset with label vectors using the script `src/baselines/simple/create_train_set.py`
+5. Train and evaluate the model using the script `src/baselines/simple/evaluate.py`
