@@ -4,6 +4,8 @@
 
 ### Accuracy metrics
 
+Simple functions to calculate the accuracy metrics is available in: `src/tools/generic_accuracy/accuracy_funcs.py`
+
 We employ two main evaluation metrics: `ACC_presence` and `ACC_salience`.
 
 - `ACC_presence` measures whether the correct label(s) are predicted without errors.
@@ -14,8 +16,6 @@ We employ two main evaluation metrics: `ACC_presence` and `ACC_salience`.
 - `ACC_salience` extends `ACC_presence` by considering the relative prominence of each emotion.
   It evaluates whether the predicted proportions reflect the correct ranking — whether the emotions
   are equally present or one is more dominant than the other. This metric applies only to blended emotions.
-
-**Simple functions to calculate the accuracy metrics is available in:** `src/tools/generic_accuracy/accuracy_funcs.py`
 
 ### Filename parser
 
