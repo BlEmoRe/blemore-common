@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 
 from config import ROOT_DIR
-from src.tools.accuracy_measures.metadata2labels import metadata2labels
+from src.tools.generic_accuracy.metadata2labels import metadata2labels
 
 
 def acc_presence_single(label, pred):

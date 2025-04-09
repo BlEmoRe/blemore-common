@@ -15,7 +15,7 @@ We employ two main evaluation metrics: `ACC_presence` and `ACC_salience`.
   It evaluates whether the predicted proportions reflect the correct ranking — whether the emotions
   are equally present or one is more dominant than the other. This metric applies only to blended emotions.
 
-**Simple functions to calculate the accuracy metrics is available in:** `src/tools/accuracy_measures.py`
+**Simple functions to calculate the accuracy metrics is available in:** `src/tools/generic_accuracy/accuracy_funcs.py`
 
 ### Filename parser
 

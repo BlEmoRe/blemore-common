@@ -12,7 +12,7 @@ from src.baselines.simple.train_eval.probability_threshold_optimization import f
 
 from src.baselines.simple.train_eval.train import Trainer
 from src.baselines.simple.train_eval.utils import get_top_k_predictions, get_blend_indices, label_vector2dict
-from src.tools.accuracy_measures.accuracy_measures import acc_presence_total, acc_salience_total
+from src.tools.generic_accuracy.accuracy_funcs import acc_presence_total, acc_salience_total
 
 from src.baselines.simple.config_simple_baseline import AGGREGATED_OPENFACE_PATH
 

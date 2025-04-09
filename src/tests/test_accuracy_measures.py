@@ -1,6 +1,6 @@
 import unittest
 
-from src.tools.accuracy_measures import accuracy_measures
+from src.tools.generic_accuracy import accuracy_funcs
 
 
 class TestAccuracyMeasures(unittest.TestCase):
@@ -25,22 +25,22 @@ class TestAccuracyMeasures(unittest.TestCase):
         }
 
     def test_acc_presence_single(self):
-        self.assertTrue(accuracy_measures.acc_presence_single(self.labels['correct_presence_only'], self.y_pred['correct_presence_only']))
-        self.assertFalse(accuracy_measures.acc_presence_single(self.labels['incorrect_presence'], self.y_pred['incorrect_presence']))
-        self.assertTrue(accuracy_measures.acc_presence_single(self.labels['correct_presence_salience'], self.y_pred['correct_presence_salience']))
-        self.assertTrue(accuracy_measures.acc_presence_single(self.labels['flipped_order_correct'], self.y_pred['flipped_order_correct']))
-        self.assertTrue(accuracy_measures.acc_presence_single(self.labels['wrong_salience_values'], self.y_pred['wrong_salience_values']))
+        self.assertTrue(accuracy_funcs.acc_presence_single(self.labels['correct_presence_only'], self.y_pred['correct_presence_only']))
+        self.assertFalse(accuracy_funcs.acc_presence_single(self.labels['incorrect_presence'], self.y_pred['incorrect_presence']))
+        self.assertTrue(accuracy_funcs.acc_presence_single(self.labels['correct_presence_salience'], self.y_pred['correct_presence_salience']))
+        self.assertTrue(accuracy_funcs.acc_presence_single(self.labels['flipped_order_correct'], self.y_pred['flipped_order_correct']))
+        self.assertTrue(accuracy_funcs.acc_presence_single(self.labels['wrong_salience_values'], self.y_pred['wrong_salience_values']))
 
     def test_acc_salience_single(self):
-        self.assertTrue(accuracy_measures.acc_salience_single(self.labels['correct_presence_salience'], self.y_pred['correct_presence_salience']))
-        self.assertFalse(accuracy_measures.acc_salience_single(self.labels['incorrect_salience'], self.y_pred['incorrect_salience']))
-        self.assertTrue(accuracy_measures.acc_salience_single(self.labels['flipped_order_correct'], self.y_pred['flipped_order_correct']))
-        self.assertFalse(accuracy_measures.acc_salience_single(self.labels['wrong_salience_values'], self.y_pred['wrong_salience_values']))
+        self.assertTrue(accuracy_funcs.acc_salience_single(self.labels['correct_presence_salience'], self.y_pred['correct_presence_salience']))
+        self.assertFalse(accuracy_funcs.acc_salience_single(self.labels['incorrect_salience'], self.y_pred['incorrect_salience']))
+        self.assertTrue(accuracy_funcs.acc_salience_single(self.labels['flipped_order_correct'], self.y_pred['flipped_order_correct']))
+        self.assertFalse(accuracy_funcs.acc_salience_single(self.labels['wrong_salience_values'], self.y_pred['wrong_salience_values']))
 
     def test_acc_salience_single_raises(self):
         # Length mismatch
         with self.assertRaises(ValueError):
-            accuracy_measures.acc_salience_single(self.labels['correct_presence_only'], self.y_pred['correct_presence_only'])
+            accuracy_funcs.acc_salience_single(self.labels['correct_presence_only'], self.y_pred['correct_presence_only'])
 
 
 if __name__ == '__main__':
