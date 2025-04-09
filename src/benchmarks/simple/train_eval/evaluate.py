@@ -38,7 +38,7 @@ for fold in folds:
 
     # predict
     trainer = Trainer(model, optimizer)
-    trainer.train(train_loader, epochs=100)
+    trainer.train(train_loader, epochs=150)
 
     y_pred = trainer.predict(val_loader)
     y_pred_top_k = get_top_k_predictions(y_pred, k=2)
@@ -52,7 +52,7 @@ for fold in folds:
     # zero out predictions below threshold
     y_pred_top_k[y_pred_top_k < best_positive_threshold] = 0
     acc_presence, _ = custom_acc_presence(labels, y_pred_top_k)
-    print("acc presence: ", acc_presence)
+    print("acc presence from custom: ", acc_presence)
 
     mixed_indices = get_blend_indices(labels)
     best_salience_diff_threshold = find_optimal_salience_threshold(labels[mixed_indices], y_pred_top_k[mixed_indices])
@@ -61,7 +61,7 @@ for fold in folds:
                                           y_pred_top_k[mixed_indices],
                                           best_salience_diff_threshold)
 
-    print("acc salience: ", acc_salience)
+    print("acc salience from custom: ", acc_salience)
 
     y_pred_canonical = map_vector_pairwise(y_pred_top_k, best_salience_diff_threshold)
 
@@ -76,9 +76,6 @@ for fold in folds:
 
     print(f"Presence Accuracy: {presence:.2f}")
     print(f"Salience Accuracy: {salience:.2f}")
-
-    # verify that filenames are actually in fold 0
-
 
 
 

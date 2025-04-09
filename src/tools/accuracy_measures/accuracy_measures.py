@@ -39,8 +39,8 @@ def acc_salience_single(label, pred):
     if len(label) != 2 or len(pred) != 2:
         raise ValueError("Both label and prediction must contain exactly two emotions to calculate salience accuracy.")
 
-    label_dict = {l["emotion"]: l["salience"] for l in label}
-    pred_dict = {p["emotion"]: p["salience"] for p in pred}
+    label_dict = {l["emotion"]: np.round(l["salience"], 0) for l in label}
+    pred_dict = {p["emotion"]: np.round(p["salience"], 0) for p in pred}
     return label_dict == pred_dict
 
 
