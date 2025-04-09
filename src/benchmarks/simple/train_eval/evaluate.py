@@ -4,10 +4,11 @@ from torch.utils.data import DataLoader
 
 from config import ROOT_DIR
 from src.benchmarks.simple.train_eval.custom_accuracy import custom_acc_presence, custom_acc_salience
+
 from src.benchmarks.simple.train_eval.load_data import get_index2emotion, load_data
 from src.benchmarks.simple.train_eval.model import MultiLabelSoftmaxNN
 from src.benchmarks.simple.train_eval.probability_threshold_optimization import find_optimal_positive_threshold, \
-    find_optimal_salience_discriminator
+    find_optimal_salience_threshold
 
 from src.benchmarks.simple.train_eval.train import Trainer
 from src.benchmarks.simple.train_eval.utils import get_top_k_predictions, get_blend_indices, label_vector2dict
@@ -44,19 +45,19 @@ for fold in folds:
     indices = val_dataset.indices
 
     # Find best thresholds
-    best_threshold = find_optimal_positive_threshold(labels, y_pred_top_k)
+    best_positive_threshold = find_optimal_positive_threshold(labels, y_pred_top_k)
 
     # zero out predictions below threshold
-    y_pred_top_k[y_pred_top_k < best_threshold] = 0
+    y_pred_top_k[y_pred_top_k < best_positive_threshold] = 0
     acc_presence, _ = custom_acc_presence(labels, y_pred_top_k)
     print("acc presence: ", acc_presence)
 
     mixed_indices = get_blend_indices(labels)
-    best_disc = find_optimal_salience_discriminator(labels[mixed_indices], y_pred_top_k[mixed_indices])
+    best_salience_diff_threshold = find_optimal_salience_threshold(labels[mixed_indices], y_pred_top_k[mixed_indices])
 
-    acc_salience, _ = custom_acc_salience(labels[mixed_indices],
+    acc_salience, salience_preds = custom_acc_salience(labels[mixed_indices],
                                           y_pred_top_k[mixed_indices],
-                                          distance_tolerance=best_disc)
+                                          best_salience_diff_threshold)
 
     print("acc salience: ", acc_salience)
 

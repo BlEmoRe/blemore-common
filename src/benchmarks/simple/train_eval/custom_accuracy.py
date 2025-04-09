@@ -29,55 +29,29 @@ def custom_acc_presence(y_true, y_pred):
     return acc_presence, true_preds
 
 
-def compute_distance(salience_scalars):
-    """Computes the distance between two scalar values."""
-    return salience_scalars[0] - salience_scalars[1]
-
-
-def is_prediction_correct(true_proportions, pred_proportions, distance_tolerance=0.1):
-    true_distance = compute_distance(true_proportions)
-    pred_distance = compute_distance(pred_proportions)
-
-    if true_distance > 0:
-        return pred_distance > distance_tolerance
-    elif true_distance == 0:
-        return abs(pred_distance) < distance_tolerance
-    elif true_distance < 0:
-        return pred_distance < -distance_tolerance
-    else:
-        raise ValueError("Invalid true distance")
-
-
-def custom_acc_salience(y_true, y_pred, distance_tolerance=0.1):
+def custom_acc_salience(y_true, y_pred, threshold=0.1):
     """
-    Computes salience accuracy from probability vectors.
+    Compute salience accuracy by mapping true/pred vectors to canonical forms and comparing them.
 
     Parameters:
-    - y_true: np.ndarray (shape: [n_samples, n_classes]), ground truth salience vectors.
-    - y_pred: np.ndarray (shape: [n_samples, n_classes]), predicted salience vectors.
-    - distance_tolerance: float, determines the cut-off for when to consider two salience vectors as equal.
+    - y_true, y_pred: np.ndarray of shape (n_samples, n_classes)
+    - threshold: float, tolerance for mapping to 0.5/0.5
+
+    Returns:
+    - accuracy (float), correct (list of bools)
     """
-    num_samples = y_true.shape[0]
+    y_pred_mapped = map_vector_pairwise(y_pred, threshold)
 
     correct = []
+    for t, p in zip(y_true, y_pred_mapped):
+        pred_nz = np.count_nonzero(p)
 
-    for i in range(num_samples):
-        true_indices = np.nonzero(y_true[i])[0]
-        pred_indices = np.nonzero(y_pred[i])[0]
-
-        if not np.array_equal(true_indices, pred_indices):
+        if pred_nz != 2:
             correct.append(False)
-            continue
+        else:
+            correct.append(np.array_equal(t, p))
 
-        true_salience = y_true[i][true_indices]
-        pred_salience = y_pred[i][true_indices]
-
-        ret = is_prediction_correct(true_salience, pred_salience, distance_tolerance=distance_tolerance)
-
-        correct.append(ret)
-
-    accuracy = sum(correct) / len(correct) if len(correct) > 0 else 0
-    return accuracy, correct
+    return np.mean(correct), correct
 
 
 def map_vector_pairwise(y_pred, threshold=0.1):
@@ -88,7 +62,8 @@ def map_vector_pairwise(y_pred, threshold=0.1):
         non_zero_indices = np.where(vec > 0)[0]
 
         if len(non_zero_indices) != 2:
-            raise ValueError(f"Expected exactly two non-zero values, got {len(non_zero_indices)} in vector {vec}")
+            mapped.append(vec.tolist())
+            continue
 
         i, j = non_zero_indices
         v1, v2 = vec[i], vec[j]

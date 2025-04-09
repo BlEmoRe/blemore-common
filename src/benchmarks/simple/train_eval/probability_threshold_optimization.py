@@ -4,18 +4,18 @@ import matplotlib.pyplot as plt
 from src.benchmarks.simple.train_eval.custom_accuracy import custom_acc_presence, custom_acc_salience
 
 
-def find_optimal_salience_discriminator(y_true, y_pred, tolerances=np.linspace(0.00001, 0.4, 100), plot=True):
+def find_optimal_salience_threshold(y_true, y_pred, thresholds=np.linspace(0.00001, 0.4, 100), plot=True):
     accuracies = []
 
-    for tol in tolerances:
-        acc, _ = custom_acc_salience(y_true, y_pred, distance_tolerance=tol)
+    for threshold in thresholds:
+        acc, _ = custom_acc_salience(y_true, y_pred, threshold)
         accuracies.append(acc)
 
     best_idx = np.argmax(accuracies)
-    best_tol = tolerances[best_idx]
+    best_tol = thresholds[best_idx]
 
     if plot:
-        plot_tolerance_vs_accuracy(tolerances, accuracies, best_tol)
+        plot_salience_accuracy_vs_threshold(thresholds, accuracies, best_tol)
 
     return best_tol
 
@@ -47,13 +47,13 @@ def find_optimal_positive_threshold(y_true,
     return best_threshold
 
 
-def plot_tolerance_vs_accuracy(tolerances, accuracies, best_tol):
+def plot_salience_accuracy_vs_threshold(tolerances, accuracies, best_tol):
     plt.figure(figsize=(8, 6))
-    plt.plot(tolerances, accuracies, label="Very Strict Accuracy", marker="o")
+    plt.plot(tolerances, accuracies, label="Acc Salience", marker="o")
     plt.axvline(best_tol, color="red", linestyle="dashed", label=f"Optimal Tolerance: {best_tol:.5f}")
-    plt.xlabel("Tolerance")
+    plt.xlabel("Threshold")
     plt.ylabel("Accuracy")
-    plt.title("Very Strict Accuracy vs. Tolerance")
+    plt.title("Salience Accuracy vs. Salience Diff Threshold")
     plt.legend()
     plt.grid(True)
     plt.show()
