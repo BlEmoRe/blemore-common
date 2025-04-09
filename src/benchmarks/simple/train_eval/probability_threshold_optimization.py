@@ -1,14 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from src.benchmarks.simple.train_eval.accuracy_measures import compute_acc_presence, compute_acc_salience
+from src.benchmarks.simple.train_eval.custom_accuracy import custom_acc_presence, custom_acc_salience
 
 
 def find_optimal_salience_discriminator(y_true, y_pred, tolerances=np.linspace(0.00001, 0.4, 100), plot=True):
     accuracies = []
 
     for tol in tolerances:
-        acc, _ = compute_acc_salience(y_true, y_pred, distance_tolerance=tol)
+        acc, _ = custom_acc_salience(y_true, y_pred, distance_tolerance=tol)
         accuracies.append(acc)
 
     best_idx = np.argmax(accuracies)
@@ -32,7 +32,7 @@ def find_optimal_positive_threshold(y_true,
         binary_preds = (y_pred >= threshold).astype(int)
 
         # Compute accuracy
-        acc_presence, _ = compute_acc_presence(y_true, binary_preds)
+        acc_presence, _ = custom_acc_presence(y_true, binary_preds)
 
         # Store results
         accuracies.append(acc_presence)

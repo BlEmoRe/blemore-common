@@ -10,9 +10,10 @@ from config import ROOT_DIR
 class EmotionDataset(Dataset):
     """ Custom PyTorch Dataset for Emotion Classification """
 
-    def __init__(self, X, y):
+    def __init__(self, X, y, original_indices=None):
         self.X = torch.tensor(X, dtype=torch.float32)
         self.y = torch.tensor(y, dtype=torch.float32)
+        self.original_indices = original_indices
 
     def __len__(self):
         return len(self.X)
@@ -32,6 +33,10 @@ class EmotionDataset(Dataset):
     def labels(self):
         return self.y  # Full label tensor
 
+    @property
+    def indices(self):
+        return self.original_indices
+
 
 def load_data(fold_id: int = 0):
     """Loads and preprocesses training and validation data for a specific fold."""
@@ -39,7 +44,7 @@ def load_data(fold_id: int = 0):
     data_path = os.path.join(ROOT_DIR, "data/benchmarks/simple/train_data_probabilistic.npz")
     data = np.load(data_path)
 
-    X, y, folds = data["X"], data["y"], data["folds"]
+    X, y, folds, indices = data["X"], data["y"], data["folds"], data["indices"]
 
     # Select train and val based on fold
     is_val = folds == fold_id
@@ -47,6 +52,7 @@ def load_data(fold_id: int = 0):
 
     X_train, y_train = X[is_train], y[is_train]
     X_val, y_val = X[is_val], y[is_val]
+    val_indices = indices[is_val]
 
     # Normalize features based on training set only
     scaler = StandardScaler()
@@ -55,7 +61,7 @@ def load_data(fold_id: int = 0):
 
     # Wrap in datasets
     train_dataset = EmotionDataset(X_train_scaled, y_train)
-    val_dataset = EmotionDataset(X_val_scaled, y_val)
+    val_dataset = EmotionDataset(X_val_scaled, y_val, original_indices=val_indices)
 
     return train_dataset, val_dataset
 

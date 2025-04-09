@@ -30,3 +30,57 @@ def get_blend_indices(y: np.ndarray) -> np.ndarray:
     return np.where((y > 0).sum(axis=1) > 1)[0]
 
 
+def label_vector2dict(filenames, y_pred, index2emotion):
+    """
+    Converts a 2D numpy array of predictions to a list of dictionaries.
+
+    :param filenames: List of filenames
+    :param y_pred: 2D numpy array of shape (n_samples, n_labels).
+    :param index2emotion: Mapping from indices to emotion labels.
+    :return: List of dictionaries with 'emotion' and 'salience' keys.
+    """
+    ret = {}
+    for i in range(y_pred.shape[0]):
+        filename = filenames[i]
+
+        prediction = []
+        for j in range(y_pred.shape[1]):
+            if y_pred[i][j] > 0:
+                prediction.append({"emotion": index2emotion[j], "salience": y_pred[i][j].item()})
+
+        if len(prediction) == 0:
+            prediction.append({"emotion": "neu", "salience": 1.0})
+
+        ret[filename] = prediction
+    return ret
+
+
+def main():
+    # Example usage
+    index2emotion = {
+        0: "ang",
+        1: "disg",
+        2: "fea",
+        3: "hap",
+        4: "sad"    }
+
+    y_pred = np.array([
+        [0.5, 0., 0., 0., 0.5],
+        [0., 0., 0., 0.3, 0.7],
+        [1, 0., 0., 0., 0.],
+        [0, 0., 0., 0., 0.]
+    ])
+
+    filenames = [
+        "A102_ang_int1_ver1",
+        "A102_ang_int2_ver1",
+        "A102_disg_int1_ver1",
+        "A102_neu_sit2_ver1"
+    ]
+
+    y_pred_dict = label_vector2dict(filenames, y_pred, index2emotion)
+    print(y_pred_dict)
+
+
+if __name__ == "__main__":
+    main()

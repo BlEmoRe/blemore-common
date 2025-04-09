@@ -2,8 +2,6 @@
 *.csv
 *.npz
 
-src/tools/accuracy_measures/*
-src/tools/accuracy_measures
 
 # Python general
 __pycache__/
