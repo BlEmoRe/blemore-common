@@ -31,11 +31,12 @@ def custom_acc_presence(y_true, y_pred):
 
 def custom_acc_salience(y_true, y_pred, threshold=0.1):
     """
-    Compute salience accuracy by mapping true/pred vectors to canonical forms and comparing them.
+    Compute salience accuracy by comparing canonical predictions to true salience vectors.
 
     Parameters:
-    - y_true, y_pred: np.ndarray of shape (n_samples, n_classes)
-    - threshold: float, tolerance for mapping to 0.5/0.5
+    - y_true (np.ndarray): Ground truth salience vectors.
+    - y_pred (np.ndarray): Predicted salience vectors.
+    - threshold (float): Tolerance for 0.5/0.5 mapping.
 
     Returns:
     - accuracy (float), correct (list of bools)
@@ -45,7 +46,6 @@ def custom_acc_salience(y_true, y_pred, threshold=0.1):
     correct = []
     for t, p in zip(y_true, y_pred_mapped):
         pred_nz = np.count_nonzero(p)
-
         if pred_nz != 2:
             correct.append(False)
         else:
@@ -55,30 +55,41 @@ def custom_acc_salience(y_true, y_pred, threshold=0.1):
 
 
 def map_vector_pairwise(y_pred, threshold=0.1):
+    """
+    Map predicted salience vectors to canonical forms (0.5/0.5 or 0.7/0.3), in NumPy format.
+
+    Parameters:
+    - y_pred (np.ndarray): Array of shape (n_samples, n_classes)
+    - threshold (float): Max allowed difference for neutral (0.5/0.5) mapping.
+
+    Returns:
+    - np.ndarray: Canonical salience predictions, same shape as y_pred.
+    """
+    y_pred = np.copy(y_pred)  # avoid modifying in-place
     mapped = []
 
     for vec in y_pred:
-        vec = np.array(vec)
         non_zero_indices = np.where(vec > 0)[0]
 
         if len(non_zero_indices) != 2:
-            mapped.append(vec.tolist())
+            mapped.append(vec)
             continue
 
         i, j = non_zero_indices
         v1, v2 = vec[i], vec[j]
 
+        new_vec = np.zeros_like(vec)
+
         if abs(v1 - v2) <= threshold:
-            vec[i], vec[j] = 0.5, 0.5
+            new_vec[i], new_vec[j] = 0.5, 0.5
         elif v1 > v2:
-            vec[i], vec[j] = 0.7, 0.3
+            new_vec[i], new_vec[j] = 0.7, 0.3
         else:
-            vec[i], vec[j] = 0.3, 0.7
+            new_vec[i], new_vec[j] = 0.3, 0.7
 
-        mapped.append(vec.tolist())
+        mapped.append(new_vec)
 
-    return mapped
-
+    return np.stack(mapped)
 
 
 def main():

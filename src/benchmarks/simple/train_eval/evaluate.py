@@ -3,7 +3,8 @@ import torch
 from torch.utils.data import DataLoader
 
 from config import ROOT_DIR
-from src.benchmarks.simple.train_eval.custom_accuracy import custom_acc_presence, custom_acc_salience
+from src.benchmarks.simple.train_eval.custom_accuracy import custom_acc_presence, custom_acc_salience, \
+    map_vector_pairwise
 
 from src.benchmarks.simple.train_eval.load_data import get_index2emotion, load_data
 from src.benchmarks.simple.train_eval.model import MultiLabelSoftmaxNN
@@ -12,12 +13,13 @@ from src.benchmarks.simple.train_eval.probability_threshold_optimization import 
 
 from src.benchmarks.simple.train_eval.train import Trainer
 from src.benchmarks.simple.train_eval.utils import get_top_k_predictions, get_blend_indices, label_vector2dict
+from src.tools.accuracy_measures.accuracy_measures import acc_presence_total, acc_salience_total
 
 index2emotion = get_index2emotion()
 
 folds = [0, 1, 2, 3, 4]
 
-metadata_path = ROOT_DIR + "/data/train_metadata.csv"
+metadata_path = ROOT_DIR + "/data/benchmarks/simple/agg_openface_data.csv"
 
 df_metadata = pd.read_csv(metadata_path)
 
@@ -61,11 +63,23 @@ for fold in folds:
 
     print("acc salience: ", acc_salience)
 
+    y_pred_canonical = map_vector_pairwise(y_pred_top_k, best_salience_diff_threshold)
+
     # convert predictions to standard format
     df_metadata_val = df_metadata.iloc[indices]
     filenames = df_metadata_val["filename"].values
 
-    label_dict = label_vector2dict(filenames, y_pred_top_k, index2emotion)
+    pred_dict = label_vector2dict(filenames, y_pred_canonical, index2emotion)
+
+    presence = acc_presence_total(pred_dict, metadata_path)
+    salience = acc_salience_total(pred_dict, metadata_path)
+
+    print(f"Presence Accuracy: {presence:.2f}")
+    print(f"Salience Accuracy: {salience:.2f}")
+
+    # verify that filenames are actually in fold 0
+
+
 
 
 

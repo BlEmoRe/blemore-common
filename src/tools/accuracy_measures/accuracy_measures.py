@@ -50,7 +50,7 @@ def acc_presence_total(preds, metadata_path):
 
     Parameters:
         preds (dict): Mapping from filename to list of predictions (each a dict with 'emotion' and 'salience').
-                        e.g. {'A102_ang_int1_ver1': [{'emotion': 'neu', 'salience': 1.0}], ...}
+                        e.g. {'A102_ang_int1_ver1': [{'emotion': 'neu', 'salience': 100.0}], ...}
                         note that the salience values are completely ignored in this function.
                         salience is only used in acc_salience_total, and only applicable for samples with exactly two emotions.
 
@@ -110,12 +110,12 @@ def acc_salience_total(preds, metadata_path):
 
 def main():
     # Provide labels in the following format
-    y_pred = {'A102_ang_int1_ver1': [{'emotion': 'neu', 'salience': 1.0}],
-              'A102_ang_int2_ver1': [{'emotion': 'ang', 'salience': 1.0}],
-              'A102_disg_int1_ver1': [{'emotion': 'fea', 'salience': 1.0}],
-              'A102_disg_int2_ver1': [{'emotion': 'disg', 'salience': 1.0}],
-              'A55_fea_int1_ver2': [{'emotion': 'hap', 'salience': 1.0}],
-              'A55_fea_int3_ver1': [{'emotion': 'fea', 'salience': 1.0}],
+    y_pred = {'A102_ang_int1_ver1': [{'emotion': 'neu', 'salience': 100.0}],
+              'A102_ang_int2_ver1': [{'emotion': 'ang', 'salience': 100.0}],
+              'A102_disg_int1_ver1': [{'emotion': 'fea', 'salience': 100.0}],
+              'A102_disg_int2_ver1': [{'emotion': 'disg', 'salience': 100.0}],
+              'A55_fea_int1_ver2': [{'emotion': 'hap', 'salience': 100.0}],
+              'A55_fea_int3_ver1': [{'emotion': 'fea', 'salience': 100.0}],
               'A407_mix_disg_hap_50_50_ver1': [{'emotion': 'disg', 'salience': 50},
                                                {'emotion': 'hap', 'salience': 50}],
               'A407_mix_disg_hap_70_30_ver1': [{'emotion': 'disg', 'salience': 30.0},

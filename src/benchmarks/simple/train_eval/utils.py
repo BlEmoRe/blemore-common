@@ -40,16 +40,17 @@ def label_vector2dict(filenames, y_pred, index2emotion):
     :return: List of dictionaries with 'emotion' and 'salience' keys.
     """
     ret = {}
+
     for i in range(y_pred.shape[0]):
         filename = filenames[i]
 
         prediction = []
         for j in range(y_pred.shape[1]):
             if y_pred[i][j] > 0:
-                prediction.append({"emotion": index2emotion[j], "salience": y_pred[i][j].item()})
+                prediction.append({"emotion": index2emotion[j], "salience": np.round(y_pred[i][j], 1).item() * 100})
 
         if len(prediction) == 0:
-            prediction.append({"emotion": "neu", "salience": 1.0})
+            prediction.append({"emotion": "neu", "salience": 100})
 
         ret[filename] = prediction
     return ret
