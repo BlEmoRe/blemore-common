@@ -5,7 +5,7 @@ from torch.utils.data import Dataset
 from sklearn.preprocessing import StandardScaler
 import json
 
-from config import ROOT_DIR
+from src.baselines.simple.config_simple_baseline import VECTOR_TRAINING_SET_PATH, LABEL_MAPPING_PATH
 
 class EmotionDataset(Dataset):
     """ Custom PyTorch Dataset for Emotion Classification """
@@ -41,8 +41,7 @@ class EmotionDataset(Dataset):
 def load_data(fold_id: int = 0):
     """Loads and preprocesses training and validation data for a specific fold."""
 
-    data_path = os.path.join(ROOT_DIR, "data/benchmarks/simple/train_data_probabilistic.npz")
-    data = np.load(data_path)
+    data = np.load(VECTOR_TRAINING_SET_PATH)
 
     X, y, folds, indices = data["X"], data["y"], data["folds"], data["indices"]
 
@@ -67,10 +66,8 @@ def load_data(fold_id: int = 0):
 
 
 def get_index2emotion():
-    emotion_mapping_path = os.path.join(ROOT_DIR, "data/benchmarks/simple/emotion_label_mapping_probabilistic.json")
-
     # Load JSON file
-    with open(emotion_mapping_path, "r") as f:
+    with open(LABEL_MAPPING_PATH, "r") as f:
         emotion2index = json.load(f)
 
     index2emotion = {int(v): k for k, v in emotion2index.items()}

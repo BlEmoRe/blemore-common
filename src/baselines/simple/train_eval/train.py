@@ -6,7 +6,7 @@ from config import ROOT_DIR
 
 class Trainer:
 
-    default_path = os.path.join(ROOT_DIR, "data/benchmarks/simple/multi_label_nn.pth")
+    default_path = os.path.join(ROOT_DIR, "data/baselines/simple/multi_label_nn.pth")
 
     def __init__(self, model, optimizer, path=default_path):
         self.model = model

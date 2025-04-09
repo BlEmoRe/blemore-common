@@ -4,17 +4,15 @@ from pathlib import Path
 
 from glob import glob
 
-from config import ROOT_DIR
-from src.benchmarks.simple.constants import feature_columns
-from src.benchmarks.simple.aggregate_data.openface_operations import get_ok_confidence_ratio, get_success_ratio, interpolate_openface
+from src.baselines.simple.config_simple_baseline import feature_columns
+from src.baselines.simple.aggregate_data.openface_operations import get_ok_confidence_ratio, get_success_ratio, interpolate_openface
 
-openface_files_path = "/media/tim/Seagate Hub/mixed_emotion_challenge/openface_files/train"
-metadata_path = "/media/tim/Seagate Hub/mixed_emotion_challenge/train_partitions/metadata.csv"
-save_path = os.path.join(ROOT_DIR, "data/benchmarks/simple/agg_openface_data.csv")
+from src.baselines.simple.config_simple_baseline import METADATA_PATH, RAW_OPENFACE_FILES_PATH, AGGREGATED_OPENFACE_PATH
 
-df_metadata = pd.read_csv(metadata_path)
 
-files_glob = glob(openface_files_path + "/*.csv")
+df_metadata = pd.read_csv(METADATA_PATH)
+
+files_glob = glob(RAW_OPENFACE_FILES_PATH + "/*.csv")
 
 confidence_threshold = 0.85
 good_frames_ratio_threshold = 0.85
@@ -85,7 +83,7 @@ print(f"Empty: {len(empty)}")
 df = pd.DataFrame(agg)
 
 df_out = pd.merge(df, df_metadata, on="filename", how="inner")
-df_out.to_csv(save_path, index=False)
+df_out.to_csv(AGGREGATED_OPENFACE_PATH, index=False)
 
 
 

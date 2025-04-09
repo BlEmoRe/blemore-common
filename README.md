@@ -8,9 +8,9 @@ Simple filename parser, provided as a convenience. Note that it is not necessary
 corresponding labels and other metadata is already available in 
 the train_metadata.csv on [Zenodo](https://zenodo.org/records/15096942).
 
-## Benchmarks 
+## Baselines 
 
-### Simple Baseline Benchmarks (OpenFace + MLP)
+### Simple Baseline (OpenFace + MLP)
 
 Using a feature-based model (`MultiLabelSoftmaxNN`) trained on OpenFace features with a 
 softmax + KL-divergence objective, evaluated using 5-fold cross-validation.
@@ -30,6 +30,6 @@ softmax + KL-divergence objective, evaluated using 5-fold cross-validation.
 **Running the baseline code:**
 
 1. Extract OpenFace features from the videos.
-2. Aggregate statistical features, and merge with metadata using the script `src/benchmarks/simple/aggregate_data.py` (replace paths appropriately)
-3. Create the dataset with label vectors using the script `src/benchmarks/simple/create_train_set.py`
-4. Train and evaluate the model using the script `src/benchmarks/simple/evaluate.py`
+2. Aggregate statistical features, and merge with metadata using the script `src/baselines/simple/aggregate_data.py` (replace paths appropriately)
+3. Create the dataset with label vectors using the script `src/baselines/simple/create_train_set.py`
+4. Train and evaluate the model using the script `src/baselines/simple/evaluate.py`

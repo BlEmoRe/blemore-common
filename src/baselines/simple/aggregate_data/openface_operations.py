@@ -1,5 +1,5 @@
 import numpy as np
-from src.benchmarks.simple.constants import feature_columns
+from src.baselines.simple.config_simple_baseline import feature_columns
 
 
 def get_success_ratio(df):
