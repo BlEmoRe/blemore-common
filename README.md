@@ -47,7 +47,7 @@ the train_metadata.csv on [Zenodo](https://zenodo.org/records/15096942).
 
 ### Simple Baseline (OpenFace + MLP)
 
-Using a feature-based model (`MultiLabelSoftmaxNN`) trained on OpenFace features with a
+Using a feature-based model (`MultiLabelSoftmaxNN`) trained on [OpenFace 2.2.0](https://github.com/TadasBaltrusaitis/OpenFace) features with a
 softmax + KL-divergence objective, evaluated using 5-fold cross-validation.
 
 | Fold | Accuracy (Presence) | Accuracy (Salience) |
@@ -65,7 +65,7 @@ softmax + KL-divergence objective, evaluated using 5-fold cross-validation.
 **Running the baseline code:**
 
 1. Download the data set from [Zenodo](https://zenodo.org/records/15096942)
-2. Extract OpenFace features from the videos and provide the path to the files, along with the train_metadata.csv in
+2. Extract [OpenFace 2.2.0](https://github.com/TadasBaltrusaitis/OpenFace) features from the videos and provide the path to the files, along with the train_metadata.csv in
    `src/baselines/simple/config_simple_baseline.py`
 3. Aggregate statistical features, and merge with metadata using the script `src/baselines/simple/aggregate_data.py`
 4. Create the dataset with label vectors using the script `src/baselines/simple/create_train_set.py`
