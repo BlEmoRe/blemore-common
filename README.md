@@ -21,7 +21,7 @@ These functions rely on predictions provided in the following dictionary format:
         [
             {'emotion': 'neu', 'salience': 100.0}
         ]
-        ...
+    ...
 }
 ```
 
