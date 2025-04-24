@@ -1,33 +1,28 @@
+import pandas as pd
 import numpy as np
 
-
-def get_top_k_predictions(y_pred_matrix, k=2):
-    """
-    Applies a probability threshold and ensures at most `max_positive_labels` predictions per row.
-
-    :param k: maximum number of positive labels per row.
-    :param y_pred_matrix: np.array of shape (n_samples, n_labels) with predicted probabilities.
-    :return: np.array of shape (n_samples, n_labels) with binary predictions.
-    """
-    # Step 2: Get sorting indices (descending order)
-    sorted_indices = np.argsort(-y_pred_matrix, axis=1)  # Sort each row in descending order
-
-    # Step 3: Select only the top `max_positive_labels` indices
-    top_k_indices = sorted_indices[:, :k]  # Keep only the top `max_positive_labels` per row
-
-    # Step 4: Create a mask to enforce at most `max_positive_labels` per row
-    mask = np.zeros_like(y_pred_matrix, dtype=bool)  # Initialize mask with all False
-    np.put_along_axis(mask, top_k_indices, True, axis=1)  # Set True only for top values
-
-    # Step 5: Apply mask
-    ret = y_pred_matrix * mask
-
-    return ret
+from src.baselines.simple.config_simple_baseline import AGGREGATED_OPENFACE_PATH
+from src.baselines.simple.train_eval.blend_operations.blend_utils import convert_probs_to_salience
+from src.tools.generic_accuracy.accuracy_funcs import acc_presence_total, acc_salience_total
 
 
-def get_blend_indices(y: np.ndarray) -> np.ndarray:
-    """Returns indices of samples with more than one non-zero label."""
-    return np.where((y > 0).sum(axis=1) > 1)[0]
+def get_filename_from_indices(indices):
+    df = pd.read_csv(AGGREGATED_OPENFACE_PATH)
+    df_val = df.iloc[indices]
+    return df_val["filename"].values
+
+
+def generic_accuracy(preds, salience_threshold, indices, index2emotion):
+    filenames = get_filename_from_indices(indices)
+
+    preds_mapped = convert_probs_to_salience(preds, salience_threshold)
+    pred_dict = label_vector2dict(filenames, preds_mapped, index2emotion)
+
+    presence = acc_presence_total(pred_dict, AGGREGATED_OPENFACE_PATH)
+    salience = acc_salience_total(pred_dict, AGGREGATED_OPENFACE_PATH)
+
+    print(f"Presence Accuracy: {presence:.2f}")
+    print(f"Salience Accuracy: {salience:.2f}")
 
 
 def label_vector2dict(filenames, y_pred, index2emotion):

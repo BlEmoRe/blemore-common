@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from src.baselines.simple.train_eval.custom_accuracy import custom_acc_presence, custom_acc_salience
+from src.baselines.simple.train_eval.blend_thresholds.custom_accuracy import custom_acc_presence, custom_acc_salience
 
 
 def find_optimal_salience_threshold(y_true, y_pred, thresholds=np.linspace(0.00001, 0.4, 100), plot=True):

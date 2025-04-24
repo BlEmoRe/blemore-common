@@ -1,5 +1,7 @@
 import numpy as np
 
+from src.baselines.simple.train_eval.blend_operations.blend_utils import convert_probs_to_salience_form
+
 """
 Accuracy functions adapted for salience vector labels.
 """
@@ -41,7 +43,7 @@ def custom_acc_salience(y_true, y_pred, threshold=0.1):
     Returns:
     - accuracy (float), correct (list of bools)
     """
-    y_pred_mapped = map_vector_pairwise(y_pred, threshold)
+    y_pred_mapped = convert_probs_to_salience_form(y_pred, threshold)
 
     correct = []
     for t, p in zip(y_true, y_pred_mapped):
@@ -52,44 +54,6 @@ def custom_acc_salience(y_true, y_pred, threshold=0.1):
             correct.append(np.array_equal(t, p))
 
     return np.mean(correct), correct
-
-
-def map_vector_pairwise(y_pred, threshold=0.1):
-    """
-    Map predicted salience vectors to canonical forms (0.5/0.5 or 0.7/0.3), in NumPy format.
-
-    Parameters:
-    - y_pred (np.ndarray): Array of shape (n_samples, n_classes)
-    - threshold (float): Max allowed difference for neutral (0.5/0.5) mapping.
-
-    Returns:
-    - np.ndarray: Canonical salience predictions, same shape as y_pred.
-    """
-    y_pred = np.copy(y_pred)  # avoid modifying in-place
-    mapped = []
-
-    for vec in y_pred:
-        non_zero_indices = np.where(vec > 0)[0]
-
-        if len(non_zero_indices) != 2:
-            mapped.append(vec)
-            continue
-
-        i, j = non_zero_indices
-        v1, v2 = vec[i], vec[j]
-
-        new_vec = np.zeros_like(vec)
-
-        if abs(v1 - v2) <= threshold:
-            new_vec[i], new_vec[j] = 0.5, 0.5
-        elif v1 > v2:
-            new_vec[i], new_vec[j] = 0.7, 0.3
-        else:
-            new_vec[i], new_vec[j] = 0.3, 0.7
-
-        mapped.append(new_vec)
-
-    return np.stack(mapped)
 
 
 def main():
@@ -111,8 +75,8 @@ def main():
         [0.0, 0.41860163, 0.0, 0.0, 0.448838]
     ])
 
-    preds_mapped = map_vector_pairwise(preds, threshold=0.1)
-    print(preds_mapped)
+    # preds_mapped = map_vector_pairwise(preds, threshold=0.1)
+    # print(preds_mapped)
 
     # acc, idx = compute_acc_salience(labels, preds, distance_tolerance=0.0001)
     # print(acc)
