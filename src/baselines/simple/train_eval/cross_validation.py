@@ -1,5 +1,5 @@
-import pandas as pd
 import torch
+import numpy as np
 from torch.utils.data import DataLoader
 
 from src.baselines.simple.train_eval.accuracy_calculation import generic_accuracy
@@ -12,12 +12,8 @@ from src.baselines.simple.train_eval.model.model import MultiLabelSoftmaxNN
 from src.baselines.simple.train_eval.model.train import Trainer
 
 
-folds = [0, 1, 2, 3, 4]
-
-
-for fold in folds:
-    print(f"Fold {fold}")
-    train_dataset, val_dataset = load_data(fold_id=fold)
+def run_validation(data, fold):
+    train_dataset, val_dataset = load_data(data, fold_id=fold)  # Assuming fold_id=0 for validation
 
     # Create DataLoaders
     train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
@@ -32,7 +28,7 @@ for fold in folds:
     trainer.train(train_loader, epochs=100)
 
     y_pred = trainer.predict(val_loader)
-    y_pred_top_k = get_top_k_predictions(y_pred, k=2) # use top 2 predictions
+    y_pred_top_k = get_top_k_predictions(y_pred, k=2)  # use top 2 predictions
 
     labels = val_dataset.labels.numpy()
 
@@ -46,7 +42,19 @@ for fold in folds:
     mixed_indices = get_blend_indices(labels)
     best_salience_threshold = find_optimal_salience_threshold(labels[mixed_indices], y_pred_top_k[mixed_indices])
 
-    generic_accuracy(y_pred_top_k, best_salience_threshold, val_dataset.indices)
+    index2emotion = get_index2emotion()
+
+    generic_accuracy(y_pred_top_k, best_salience_threshold, val_dataset.indices, index2emotion)
+
+
+def cross_validate(data_path):
+    folds = [0, 1, 2, 3, 4]
+
+    for fold in folds:
+        print(f"Fold {fold}")
+        # Load data
+        data = np.load(data_path)
+        run_validation(data, fold)
 
 
 

@@ -38,10 +38,8 @@ class EmotionDataset(Dataset):
         return self.original_indices
 
 
-def load_data(fold_id: int = 0):
+def load_data(data, fold_id: int = 0):
     """Loads and preprocesses training and validation data for a specific fold."""
-
-    data = np.load(VECTOR_TRAINING_SET_PATH)
 
     X, y, folds, indices = data["X"], data["y"], data["folds"], data["indices"]
 
