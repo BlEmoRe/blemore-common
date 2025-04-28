@@ -3,7 +3,8 @@ import pandas as pd
 import numpy as np
 
 from config import ROOT_DIR
-from src.tools.generic_accuracy.metadata2labels import metadata2labels
+from src.tools.filename_parser import parse_filename
+from src.tools.generic_accuracy.metadata2labels import metadata2label
 
 
 def acc_presence_single(label, pred):
@@ -38,13 +39,12 @@ def acc_salience_single(label, pred):
     """
     if len(label) != 2 or len(pred) != 2:
         raise ValueError("Both label and prediction must contain exactly two emotions to calculate salience accuracy.")
-
-    label_dict = {l["emotion"]: np.round(l["salience"], 0) for l in label}
-    pred_dict = {p["emotion"]: np.round(p["salience"], 0) for p in pred}
+    label_dict = {l["emotion"]: round(float(l["salience"])) for l in label}
+    pred_dict = {p["emotion"]: round(float(p["salience"])) for p in pred}
     return label_dict == pred_dict
 
 
-def acc_presence_total(preds, metadata_path):
+def acc_presence_total(preds):
     """
     Compute average presence accuracy across all samples.
 
@@ -53,26 +53,20 @@ def acc_presence_total(preds, metadata_path):
                         e.g. {'A102_ang_int1_ver1': [{'emotion': 'neu', 'salience': 100.0}], ...}
                         note that the salience values are completely ignored in this function.
                         salience is only used in acc_salience_total, and only applicable for samples with exactly two emotions.
-
-        metadata_path (str): Path to metadata CSV, used to compute ground truth labels via `metadata2labels`.
-
     Returns:
         float: Mean presence accuracy across all matched files.
     """
-    df = pd.read_csv(metadata_path)
-    labels = metadata2labels(df)
 
     res = []
     for filename, predictions in preds.items():
-        if filename not in labels:
-            raise ValueError(f"Filename {filename} not found in labels")
-        label = labels[filename]
+        metadata = parse_filename(filename)
+        label = metadata2label(metadata)[filename]
         presence = acc_presence_single(label, predictions)
         res.append(presence)
     return np.mean(res)
 
 
-def acc_salience_total(preds, metadata_path):
+def acc_salience_total(preds):
     """
     Compute average salience accuracy for samples with exactly two emotions.
 
@@ -83,20 +77,13 @@ def acc_salience_total(preds, metadata_path):
                                 {'emotion': 'ang', 'salience': 30.0}
                             ], ...}
                             note that this function will only consider samples with exactly two emotions.
-
-        metadata_path (str): Path to metadata CSV, used to compute ground truth labels via `metadata2labels`.
-
     Returns:
         float: Mean salience accuracy for samples with exactly two ground truth emotions.
     """
-    df = pd.read_csv(metadata_path)
-    labels = metadata2labels(df)
-
     res = []
     for filename, predictions in preds.items():
-        if filename not in labels:
-            raise ValueError(f"Filename {filename} not found in labels")
-        label = labels[filename]
+        metadata = parse_filename(filename)
+        label = metadata2label(metadata)[filename]
         if len(label) != 2:
             continue
         if len(predictions) == 2:
@@ -129,16 +116,12 @@ def main():
               'A427_mix_ang_hap_50_50_ver1': [{'emotion': 'ang', 'salience': 30.0},
                                               {'emotion': 'hap', 'salience': 70.0}]
               }
-
-    # Provide path to train_metadata.csv from Zenodo
-    metadata_path = os.path.join(ROOT_DIR, "data/train_metadata.csv")
-
     # Calculate accuracy for presence
-    presence_accuracy = acc_presence_total(y_pred, metadata_path)
+    presence_accuracy = acc_presence_total(y_pred)
     print(f"Presence Accuracy: {presence_accuracy:.2f}")
 
     # Calculate accuracy for salience
-    salience_accuracy = acc_salience_total(y_pred, metadata_path)
+    salience_accuracy = acc_salience_total(y_pred)
     print(f"Salience Accuracy: {salience_accuracy:.2f}")
 
 if __name__ == "__main__":

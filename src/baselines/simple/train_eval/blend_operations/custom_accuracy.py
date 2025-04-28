@@ -1,6 +1,6 @@
 import numpy as np
 
-from src.baselines.simple.train_eval.blend_operations.blend_utils import convert_probs_to_salience_form
+from src.baselines.simple.train_eval.blend_operations.blend_utils import convert_probs_to_salience
 
 """
 Accuracy functions adapted for salience vector labels.
@@ -43,7 +43,7 @@ def custom_acc_salience(y_true, y_pred, threshold=0.1):
     Returns:
     - accuracy (float), correct (list of bools)
     """
-    y_pred_mapped = convert_probs_to_salience_form(y_pred, threshold)
+    y_pred_mapped = convert_probs_to_salience(y_pred, threshold)
 
     correct = []
     for t, p in zip(y_true, y_pred_mapped):

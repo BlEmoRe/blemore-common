@@ -10,7 +10,7 @@ from src.baselines.simple.train_eval.blend_thresholds.threshold_optimization imp
     find_optimal_salience_threshold
 
 from src.baselines.simple.train_eval.model.train import Trainer
-from src.baselines.simple.train_eval.accuracy_calculation import get_top_k_predictions, get_blend_indices, label_vector2dict
+from src.baselines.simple.train_eval.accuracy_calculation import get_top_k_predictions, get_blend_indices, convert_labels_to_dictionary
 from src.tools.generic_accuracy.accuracy_funcs import acc_presence_total, acc_salience_total
 
 from src.baselines.simple.config_simple_baseline import AGGREGATED_OPENFACE_PATH
@@ -24,7 +24,7 @@ def standard_accuracy_calculation(preds, salience_threshold, indices):
     filenames = df_val["filename"].values
 
     preds_mapped = map_vector_pairwise(preds, salience_threshold)
-    pred_dict = label_vector2dict(filenames, preds_mapped, index2emotion)
+    pred_dict = convert_labels_to_dictionary(filenames, preds_mapped, index2emotion)
 
     presence = acc_presence_total(pred_dict, AGGREGATED_OPENFACE_PATH)
     salience = acc_salience_total(pred_dict, AGGREGATED_OPENFACE_PATH)

@@ -6,26 +6,22 @@ from src.baselines.simple.train_eval.blend_operations.blend_utils import convert
 from src.tools.generic_accuracy.accuracy_funcs import acc_presence_total, acc_salience_total
 
 
-def get_filename_from_indices(indices):
-    df = pd.read_csv(AGGREGATED_OPENFACE_PATH)
+def get_filename_from_indices(indices, df):
     df_val = df.iloc[indices]
     return df_val["filename"].values
 
 
-def generic_accuracy(preds, salience_threshold, indices, index2emotion):
-    filenames = get_filename_from_indices(indices)
+def generic_accuracy(salience_predictions, prediction_as_filenames, index2emotion):
+    pred_dict = convert_labels_to_dictionary(prediction_as_filenames, salience_predictions, index2emotion)
 
-    preds_mapped = convert_probs_to_salience(preds, salience_threshold)
-    pred_dict = label_vector2dict(filenames, preds_mapped, index2emotion)
-
-    presence = acc_presence_total(pred_dict, AGGREGATED_OPENFACE_PATH)
-    salience = acc_salience_total(pred_dict, AGGREGATED_OPENFACE_PATH)
+    presence = acc_presence_total(pred_dict)
+    salience = acc_salience_total(pred_dict)
 
     print(f"Presence Accuracy: {presence:.2f}")
     print(f"Salience Accuracy: {salience:.2f}")
 
 
-def label_vector2dict(filenames, y_pred, index2emotion):
+def convert_labels_to_dictionary(filenames, salience_predictions, index2emotion):
     """
     Converts a 2D numpy array of predictions to a list of dictionaries.
 
@@ -36,13 +32,13 @@ def label_vector2dict(filenames, y_pred, index2emotion):
     """
     ret = {}
 
-    for i in range(y_pred.shape[0]):
+    for i in range(salience_predictions.shape[0]):
         filename = filenames[i]
 
         prediction = []
-        for j in range(y_pred.shape[1]):
-            if y_pred[i][j] > 0:
-                prediction.append({"emotion": index2emotion[j], "salience": np.round(y_pred[i][j], 1).item() * 100})
+        for j in range(salience_predictions.shape[1]):
+            if salience_predictions[i][j] > 0:
+                prediction.append({"emotion": index2emotion[j], "salience": np.round(salience_predictions[i][j], 1).item() * 100})
 
         if len(prediction) == 0:
             prediction.append({"emotion": "neu", "salience": 100})
@@ -74,7 +70,7 @@ def main():
         "A102_neu_sit2_ver1"
     ]
 
-    y_pred_dict = label_vector2dict(filenames, y_pred, index2emotion)
+    y_pred_dict = convert_labels_to_dictionary(filenames, y_pred, index2emotion)
     print(y_pred_dict)
 
 

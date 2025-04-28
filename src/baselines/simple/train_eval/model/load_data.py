@@ -5,7 +5,6 @@ from torch.utils.data import Dataset
 from sklearn.preprocessing import StandardScaler
 import json
 
-from src.baselines.simple.config_simple_baseline import VECTOR_TRAINING_SET_PATH, LABEL_MAPPING_PATH
 
 class EmotionDataset(Dataset):
     """ Custom PyTorch Dataset for Emotion Classification """
@@ -63,9 +62,9 @@ def load_data(data, fold_id: int = 0):
     return train_dataset, val_dataset
 
 
-def get_index2emotion():
+def get_index2emotion(label_mapping_path):
     # Load JSON file
-    with open(LABEL_MAPPING_PATH, "r") as f:
+    with open(label_mapping_path, "r") as f:
         emotion2index = json.load(f)
 
     index2emotion = {int(v): k for k, v in emotion2index.items()}

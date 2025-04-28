@@ -1,4 +1,4 @@
-def parse_file(filename):
+def parse_filename(filename):
     metadata = filename.split("_")
 
     video_id = metadata[0]
@@ -38,9 +38,9 @@ def parse_file(filename):
 if __name__ == "__main__":
     # Example usage
     f = "A102_ang_int1_ver1"
-    parsed_data = parse_file(f)
+    parsed_data = parse_filename(f)
     print(parsed_data)
 
     f = "A438_mix_disg_hap_30_70_ver1"
-    parsed_data = parse_file(f)
+    parsed_data = parse_filename(f)
     print(parsed_data)

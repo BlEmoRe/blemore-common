@@ -1,42 +1,44 @@
-import os
-import pandas as pd
-from config import ROOT_DIR
+from src.tools.filename_parser import parse_filename
 
 
-def metadata2labels(df):
-    """
-    Convert the metadata DataFrame to a dictionary of labels.
-    """
+def metadata2label(metadata):
+
     ret = {}
 
-    for _, row in df.iterrows():
-        filename = row["filename"]
-        emotion_1 = row["emotion_1"]
-        emotion_2 = row["emotion_2"]
+    filename = metadata.get("filename", None)
+    emotion_1 = metadata.get("emotion_1", None)
+    emotion_2 = metadata.get("emotion_2", None)
 
-        if pd.notna(row["emotion_2"]):
-            emotion_1_salience = row["emotion_1_salience"]
-            emotion_2_salience = row["emotion_2_salience"]
+    if emotion_2:
+        emotion_1_salience = metadata["emotion_1_salience"]
+        emotion_2_salience = metadata["emotion_2_salience"]
 
-            ret[filename] = [
-                {"emotion": emotion_1, "salience": emotion_1_salience},
-                {"emotion": emotion_2, "salience": emotion_2_salience}
-            ]
-        else:
-            ret[filename] = [
-                {"emotion": emotion_1, "salience": 1.0}
-            ]
-
+        ret[filename] = [
+            {"emotion": emotion_1, "salience": emotion_1_salience},
+            {"emotion": emotion_2, "salience": emotion_2_salience}
+        ]
+    else:
+        ret[filename] = [
+            {"emotion": emotion_1, "salience": 1.0}
+        ]
     return ret
 
 
 def main():
-    path = os.path.join(ROOT_DIR, "data/train_metadata.csv")
-    df_metadata = pd.read_csv(path)
-    labels = metadata2labels(df_metadata)
-    print(labels)
-    # for i in labels.items():
-    #     print(i)
+    # Example usage
+    f = "A102_ang_int1_ver1"
+    parsed_data = parse_filename(f)
+    print(parsed_data)
+
+    m = metadata2label(parsed_data)
+    print(m)
+
+    f = "A438_mix_disg_hap_30_70_ver1"
+    parsed_data = parse_filename(f)
+    print(parsed_data)
+
+    m = metadata2label(parsed_data)
+    print(m)
 
 if __name__ == "__main__":
     main()

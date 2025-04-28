@@ -2,8 +2,9 @@ import torch
 import numpy as np
 from torch.utils.data import DataLoader
 
-from src.baselines.simple.train_eval.accuracy_calculation import generic_accuracy
-from src.baselines.simple.train_eval.blend_operations.blend_utils import get_top_k_predictions, get_blend_indices
+from src.baselines.simple.train_eval.accuracy_calculation import generic_accuracy, get_filename_from_indices
+from src.baselines.simple.train_eval.blend_operations.blend_utils import get_top_k_predictions, get_blend_indices, \
+    convert_probs_to_salience
 from src.baselines.simple.train_eval.blend_operations.threshold_optimization import find_optimal_positive_threshold, \
     find_optimal_salience_threshold
 from src.baselines.simple.train_eval.model.load_data import get_index2emotion, load_data
@@ -12,7 +13,8 @@ from src.baselines.simple.train_eval.model.model import MultiLabelSoftmaxNN
 from src.baselines.simple.train_eval.model.train import Trainer
 
 
-def run_validation(data, fold):
+
+def run_validation(data, fold, df, index2emotion):
     train_dataset, val_dataset = load_data(data, fold_id=fold)  # Assuming fold_id=0 for validation
 
     # Create DataLoaders
@@ -42,19 +44,21 @@ def run_validation(data, fold):
     mixed_indices = get_blend_indices(labels)
     best_salience_threshold = find_optimal_salience_threshold(labels[mixed_indices], y_pred_top_k[mixed_indices])
 
-    index2emotion = get_index2emotion()
+    # map probabilities to salience
+    salience_predictions = convert_probs_to_salience(y_pred_top_k, best_salience_threshold)
 
-    generic_accuracy(y_pred_top_k, best_salience_threshold, val_dataset.indices, index2emotion)
+    predicted_filenames = get_filename_from_indices(val_dataset.indices, df)
+    generic_accuracy(salience_predictions, predicted_filenames, index2emotion)
 
 
-def cross_validate(data_path):
+def cross_validate(dataset, df, index2emotion):
     folds = [0, 1, 2, 3, 4]
 
     for fold in folds:
         print(f"Fold {fold}")
         # Load data
-        data = np.load(data_path)
-        run_validation(data, fold)
+        data = dataset
+        run_validation(data, fold, df, index2emotion)
 
 
 

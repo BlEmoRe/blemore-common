@@ -17,11 +17,13 @@ def main():
 
     df = pd.read_csv(os.path.join(save_folder, "aggregated_openface.csv"))
 
-    data_dict, label_to_index = create_dataset(df, save_folder, train=True)
+    dataset, label2index = create_dataset(df, save_folder, train=True)
+    index2label = {v: k for k, v in label2index.items()}
 
-    cross_validate()
+    cross_validate(dataset, df, index2label)
 
 
 
-
+if __name__ == "__main__":
+    main()
 
