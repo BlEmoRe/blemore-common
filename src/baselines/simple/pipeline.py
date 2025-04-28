@@ -56,6 +56,6 @@ def test_pipeline():
 
 
 if __name__ == "__main__":
-    # cross_validation_pipeline()
+    cross_validation_pipeline()
     test_pipeline()
 

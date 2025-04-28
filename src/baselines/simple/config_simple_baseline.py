@@ -1,15 +1,3 @@
-import os
-from config import ROOT_DIR
-
-# Input files (modify with your owns paths to replicate the results)
-RAW_OPENFACE_FILES_PATH = "/media/tim/Seagate Hub/mixed_emotion_challenge/openface_files/train"
-METADATA_PATH = os.path.join(ROOT_DIR, "data/train_metadata.csv")
-
-# Internal paths (used within the baseline code to save/load files)
-AGGREGATED_OPENFACE_PATH = os.path.join(ROOT_DIR, "data/baselines/simple/agg_openface_data.csv")
-LABEL_MAPPING_PATH = os.path.join(ROOT_DIR, "data/baselines/simple/emotion_label_mapping_probabilistic.json")
-VECTOR_TRAINING_SET_PATH = os.path.join(ROOT_DIR, "data/baselines/simple/train_data_probabilistic.npz")
-
 
 AU_INTENSITY_COLS = ['AU01_r',
                      'AU02_r',

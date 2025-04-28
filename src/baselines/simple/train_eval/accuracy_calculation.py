@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 
-from src.baselines.simple.config_simple_baseline import AGGREGATED_OPENFACE_PATH
 from src.baselines.simple.train_eval.blend_operations.blend_utils import convert_probs_to_salience
 from src.tools.generic_accuracy.accuracy_funcs import acc_presence_total, acc_salience_total
 

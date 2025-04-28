@@ -71,7 +71,7 @@ The results on the test set are as follows
 
 | Accuracy (Presence) | Accuracy (Salience) |
 |---------------------|---------------------|
-| 0.20                | 0.10                |
+| 0.21                | 0.10                |
 
 **Running the baseline code:**
 
