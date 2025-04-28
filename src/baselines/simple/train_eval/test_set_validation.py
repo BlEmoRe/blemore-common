@@ -25,8 +25,8 @@ def train_and_evaluate(train_data, test_data, test_df, index2label):
     trainer.train(train_loader, epochs=100)
 
     # Determined in the validation phase
-    best_presence_threshold = 0.05
-    best_salience_threshold = 0.000010
+    best_presence_threshold = 0.10
+    best_salience_threshold = 0.044453
 
     # Predict on test set
     y_test_pred = trainer.predict(test_loader)
