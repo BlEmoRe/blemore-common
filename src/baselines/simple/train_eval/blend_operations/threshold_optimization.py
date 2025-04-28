@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from src.baselines.simple.train_eval.blend_operations.custom_accuracy import custom_acc_salience, custom_acc_presence
 
 
-def find_optimal_salience_threshold(y_true, y_pred, thresholds=np.linspace(0.00001, 0.4, 100), plot=True):
+def find_optimal_salience_threshold(y_true, y_pred, thresholds=np.linspace(0.00001, 0.4, 10), plot=True):
     accuracies = []
 
     for threshold in thresholds:
@@ -20,7 +20,7 @@ def find_optimal_salience_threshold(y_true, y_pred, thresholds=np.linspace(0.000
     return best_tol
 
 
-def find_optimal_positive_threshold(y_true,
+def find_optimal_presence_threshold(y_true,
                                     y_pred,
                                     positive_thresholds=np.linspace(0.05, 0.95, 19),
                                     plot=True):
@@ -33,6 +33,11 @@ def find_optimal_positive_threshold(y_true,
 
         # Compute accuracy
         acc_presence, _ = custom_acc_presence(y_true, binary_preds)
+
+        salience_threshold = find_optimal_salience_threshold(y_true, binary_preds)
+        # Compute accuracy
+        acc_salience, _ = custom_acc_salience(y_true, binary_preds, salience_threshold)
+
 
         # Store results
         accuracies.append(acc_presence)

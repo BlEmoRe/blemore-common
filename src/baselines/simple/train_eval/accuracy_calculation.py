@@ -20,6 +20,8 @@ def generic_accuracy(salience_predictions, prediction_as_filenames, index2emotio
     print(f"Presence Accuracy: {presence:.2f}")
     print(f"Salience Accuracy: {salience:.2f}")
 
+    return presence, salience
+
 
 def convert_labels_to_dictionary(filenames, salience_predictions, index2emotion):
     """
