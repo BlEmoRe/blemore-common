@@ -73,6 +73,13 @@ The results on the test set are as follows
 |---------------------|---------------------|
 | 0.21                | 0.10                |
 
+#### Chance accuracy 
+
+For the test set a simple _most frequent classifier_ has `acc_presence` of 0.74 and `acc_salience` of 0.033.
+
+See script `src/baselines/chance/most_frequent_classifier.py` for details.
+
+
 **Running the baseline code:**
 
 1. Download the data set from [Zenodo](https://zenodo.org/records/15096942)
