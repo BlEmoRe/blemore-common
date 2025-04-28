@@ -38,8 +38,7 @@ We employ two main evaluation metrics: `ACC_presence` and `ACC_salience`.
 
 ### Filename parser
 
-Simple filename parser, provided as a convenience. Note that it is not necessary to use the filename parser, since the
-filenames and their
+Simple filename parser, provided as a convenience. The filenames and their
 corresponding labels and other metadata is already available in
 the train_metadata.csv on [Zenodo](https://zenodo.org/records/15096942).
 
@@ -48,25 +47,34 @@ the train_metadata.csv on [Zenodo](https://zenodo.org/records/15096942).
 ### Simple Baseline (OpenFace + MLP)
 
 Using a feature-based model (`MultiLabelSoftmaxNN`) trained on [OpenFace 2.2.0](https://github.com/TadasBaltrusaitis/OpenFace) features with a
-softmax + KL-divergence objective, evaluated using 5-fold cross-validation.
-
-| Fold | Accuracy (Presence) | Accuracy (Salience) |
-|------|---------------------|---------------------|
-| 0    | 0.2372              | 0.1037              |
-| 1    | 0.2407              | 0.0824              |
-| 2    | 0.2456              | 0.0917              |
-| 3    | 0.2358              | 0.0730              |
-| 4    | 0.2396              | 0.0845              |
+softmax + KL-divergence objective. 
 
 * Loss: `KLDivLoss` vs. probabilistic multi-label targets
 * Optimizer: `Adam (lr=0.001, weight_decay=1e-4)`
 * Epochs: `100`
 
+#### Cross Validation
+
+We provide pre-defined folds in the dataset, the baseline results for each fold are as follows:
+
+| Fold | Accuracy (Presence) | Accuracy (Salience) |
+|------|---------------------|---------------------|
+| 0    | 0.24                | 0.14                |
+| 1    | 0.19                | 0.11                |
+| 2    | 0.20                | 0.15                |
+| 3    | 0.22                | 0.10                |
+| 4    | 0.22                | 0.10                |
+
+#### Results on the test set
+
+The results on the test set are as follows
+
+| Accuracy (Presence) | Accuracy (Salience) |
+|---------------------|---------------------|
+| 0.20                | 0.10                |
+
 **Running the baseline code:**
 
 1. Download the data set from [Zenodo](https://zenodo.org/records/15096942)
-2. Extract [OpenFace 2.2.0](https://github.com/TadasBaltrusaitis/OpenFace) features from the videos and provide the path to the files, along with the train_metadata.csv in
-   `src/baselines/simple/config_simple_baseline.py`
-3. Aggregate statistical features, and merge with metadata using the script `src/baselines/simple/aggregate_data.py`
-4. Create the dataset with label vectors using the script `src/baselines/simple/create_train_set.py`
-5. Train and evaluate the model using the script `src/baselines/simple/evaluate.py`
+2. Extract [OpenFace 2.2.0](https://github.com/TadasBaltrusaitis/OpenFace) features from the videos.
+3. Run the baseline code in `src/baselines/simple/pipeline.py`. Adjust the paths as necessary.

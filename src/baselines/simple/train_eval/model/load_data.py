@@ -37,29 +37,39 @@ class EmotionDataset(Dataset):
         return self.original_indices
 
 
-def load_data(data, fold_id: int = 0):
-    """Loads and preprocesses training and validation data for a specific fold."""
+def load_data(data, fold_id: int = 0, split: bool = True):
+    """Loads and preprocesses training and validation data for a specific fold.
+       If split=False, loads the full dataset without splitting (even if folds exist).
+    """
+    X, y = data["X"], data["y"]
+    indices = data.get("indices", None)
+    folds = data.get("folds", None)
 
-    X, y, folds, indices = data["X"], data["y"], data["folds"], data["indices"]
-
-    # Select train and val based on fold
-    is_val = folds == fold_id
-    is_train = ~is_val
-
-    X_train, y_train = X[is_train], y[is_train]
-    X_val, y_val = X[is_val], y[is_val]
-    val_indices = indices[is_val]
-
-    # Normalize features based on training set only
     scaler = StandardScaler()
-    X_train_scaled = scaler.fit_transform(X_train)
-    X_val_scaled = scaler.transform(X_val)
 
-    # Wrap in datasets
-    train_dataset = EmotionDataset(X_train_scaled, y_train)
-    val_dataset = EmotionDataset(X_val_scaled, y_val, original_indices=val_indices)
+    if folds is not None and split:
+        # Normal cross-validation loading
+        is_val = folds == fold_id
+        is_train = ~is_val
 
-    return train_dataset, val_dataset
+        X_train, y_train = X[is_train], y[is_train]
+        X_val, y_val = X[is_val], y[is_val]
+        val_indices = indices[is_val] if indices is not None else None
+
+        # Normalize based on training set only
+        X_train_scaled = scaler.fit_transform(X_train)
+        X_val_scaled = scaler.transform(X_val)
+
+        train_dataset = EmotionDataset(X_train_scaled, y_train)
+        val_dataset = EmotionDataset(X_val_scaled, y_val, original_indices=val_indices)
+
+        return train_dataset, val_dataset
+    else:
+        # No splitting — load full dataset
+        X_scaled = scaler.fit_transform(X)
+
+        full_dataset = EmotionDataset(X_scaled, y, original_indices=indices)
+        return full_dataset
 
 
 def get_index2emotion(label_mapping_path):
