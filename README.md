@@ -71,7 +71,7 @@ We provide pre-defined folds in the dataset, the baseline results for each fold 
 
 The results on the test set are as follows:
 
-| Fold           | Accuracy (Presence) | Accuracy (Salience) |
+| Method         | Accuracy (Presence) | Accuracy (Salience) |
 |----------------|---------------------|---------------------|
 | OpenFace + MLP | 0.21                | 0.10                |
 | Trivial        | 0.074               | 0.033               |
