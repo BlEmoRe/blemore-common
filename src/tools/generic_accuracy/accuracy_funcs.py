@@ -1,8 +1,5 @@
-import os
-import pandas as pd
 import numpy as np
 
-from config import ROOT_DIR
 from src.tools.filename_parser import parse_filename
 from src.tools.generic_accuracy.metadata2labels import metadata2label
 
