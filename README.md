@@ -53,6 +53,8 @@ softmax + KL-divergence objective.
 * Optimizer: `Adam (lr=0.001, weight_decay=1e-4)`
 * Epochs: `100`
 
+We compare this to a trivial baseline that predicts the most frequent label in the training set.
+
 #### Cross Validation
 
 We provide pre-defined folds in the dataset, the baseline results for each fold are as follows:
@@ -67,21 +69,20 @@ We provide pre-defined folds in the dataset, the baseline results for each fold 
 
 #### Results on the test set
 
-The results on the test set are as follows
+The results on the test set are as follows:
 
-| Accuracy (Presence) | Accuracy (Salience) |
-|---------------------|---------------------|
-| 0.21                | 0.10                |
-
-#### Chance accuracy 
-
-For the test set a simple _most frequent classifier_ has `acc_presence` of 0.74 and `acc_salience` of 0.033.
-
-See script `src/baselines/chance/most_frequent_classifier.py` for details.
+| Fold           | Accuracy (Presence) | Accuracy (Salience) |
+|----------------|---------------------|---------------------|
+| OpenFace + MLP | 0.21                | 0.10                |
+| Trivial        | 0.074               | 0.033               |
 
 
 **Running the baseline code:**
 
+Simple Openface + MLP baseline:
+
 1. Download the data set from [Zenodo](https://zenodo.org/records/15096942)
 2. Extract [OpenFace 2.2.0](https://github.com/TadasBaltrusaitis/OpenFace) features from the videos.
 3. Run the baseline code in `src/baselines/simple/pipeline.py`. Adjust the paths as necessary.
+
+Trivial baseline: `src/baselines/trivial/most_frequent_classifier.py`.
