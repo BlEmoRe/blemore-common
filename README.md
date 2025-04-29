@@ -57,7 +57,7 @@ We compare this to a trivial baseline that predicts the most frequent label in t
 
 #### Cross Validation
 
-We provide pre-defined folds in the dataset, the baseline results for each fold are as follows:
+We provide pre-defined folds in the dataset, the baseline results with the OpenFace + MLP classifier for each fold are as follows:
 
 | Fold | Accuracy (Presence) | Accuracy (Salience) |
 |------|---------------------|---------------------|
