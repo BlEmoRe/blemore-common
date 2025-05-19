@@ -36,7 +36,7 @@ def convert_probs_to_salience(y_pred, threshold=0.1):
 
     Parameters:
     - y_pred (np.ndarray): Array of shape (n_samples, n_classes)
-    - threshold (float): Max allowed difference for neutral (0.5/0.5) mapping.
+    - threshold (float): Max allowed difference for (0.5/0.5) mapping.
 
     Returns:
     - np.ndarray: Canonical salience predictions, same shape as y_pred.
@@ -44,21 +44,21 @@ def convert_probs_to_salience(y_pred, threshold=0.1):
     y_pred = np.copy(y_pred)  # avoid modifying in-place
     mapped = []
 
-    for vec in y_pred:
-        non_zero_indices = np.where(vec > 0)[0]
+    for pred in y_pred:
+        non_zero_indices = np.where(pred > 0)[0]
 
         if len(non_zero_indices) != 2:
-            mapped.append(vec)
+            mapped.append(pred)
             continue
 
         i, j = non_zero_indices
-        v1, v2 = vec[i], vec[j]
+        p1, p2 = pred[i], pred[j]
 
-        new_vec = np.zeros_like(vec)
+        new_vec = np.zeros_like(pred)
 
-        if abs(v1 - v2) <= threshold:
+        if abs(p1 - p2) <= threshold:
             new_vec[i], new_vec[j] = 0.5, 0.5
-        elif v1 > v2:
+        elif p1 > p2:
             new_vec[i], new_vec[j] = 0.7, 0.3
         else:
             new_vec[i], new_vec[j] = 0.3, 0.7
