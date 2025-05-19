@@ -28,8 +28,8 @@ def get_top_2_predictions(y_pred):
 
 def probs2dict(y_pred,
                filenames,
-               salience_threshold=0.1,
-               presence_threshold=0.1):
+               presence_threshold=0.1,
+               salience_threshold=0.1):
     """
     Convert predicted probability vectors to a filename → prediction dictionary
     with canonical salience values and thresholding.

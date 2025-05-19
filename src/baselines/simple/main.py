@@ -14,6 +14,7 @@ import torch.nn.functional as F
 from config import ROOT_DIR
 from src.baselines.simple.d3_dataset import D3Dataset
 from src.baselines.simple.utils import get_top_2_predictions, LABEL_TO_INDEX, probs2dict
+from src.baselines.simple.visualizations import plot_grid_heatmap
 from src.tools.generic_accuracy.accuracy_funcs import acc_salience_total, acc_presence_total
 
 
@@ -22,10 +23,10 @@ hparams = {
     "max_seq_len": None,  # Set to None for no padding/truncation
     "learning_rate": 0.0005,
     "num_epochs": 500,
-    "weight_decay": 1e-5,
-    "dropout": 0.5,
-    "hidden_dim": 128,
-    "num_layers": 2,
+    "weight_decay": 1e-4,
+    # "dropout": 0.5,
+    # "hidden_dim": 128,
+    # "num_layers": 2,
 }
 
 
@@ -82,9 +83,9 @@ def prepare_split(df, labels, fold_id, encoding_folder, only_basic=False):
 class MultiLabelRNN(nn.Module):
     def __init__(self, input_dim, output_dim, hidden_dim=128):
         super().__init__()
-        self.rnn = nn.GRU(input_dim, hidden_dim, batch_first=True)
+        self.rnn = nn.GRU(input_dim, hidden_dim, batch_first=True, bidirectional=True)
         self.fc = nn.Sequential(
-            nn.Linear(hidden_dim, 64),
+            nn.Linear(hidden_dim * 2, 64),  # ← note the *2 here
             nn.ReLU(),
             nn.Linear(64, output_dim),
         )
@@ -92,8 +93,8 @@ class MultiLabelRNN(nn.Module):
 
     def forward(self, x, targets=None):
         # x: [B, T, D]
-        _, h_n = self.rnn(x)  # h_n: [1, B, H]
-        h_n = h_n.squeeze(0)  # [B, H]
+        _, h_n = self.rnn(x)  # h_n: [2, B, H] for bidirectional
+        h_n = h_n.permute(1, 0, 2).reshape(x.size(0), -1)  # [B, 2*H]
         logits = self.fc(h_n)  # [B, C]
         log_probs = self.log_softmax(logits)
 
@@ -109,20 +110,13 @@ def train(model, train_loader, optimizer, device, epoch):
     model.train()
     total_loss = 0
 
-    all_outputs = []
-
     for X_batch, y_batch in train_loader:
         X_batch, y_batch = X_batch.to(device), y_batch.to(device)
         optimizer.zero_grad()
         outputs, loss = model(X_batch, y_batch)
-
-        # all_outputs.append(outputs)
         loss.backward()
         optimizer.step()
         total_loss += loss.item()
-
-    # all_outputs = torch.cat(all_outputs, dim=0)
-    # print(f"Mean output: {all_outputs.mean(dim=0)}")
 
     return total_loss / len(train_loader)
 
@@ -140,7 +134,7 @@ def predict(data_loader, model, device):
     return y_pred_tensor.numpy()
 
 
-def post_process(filenames, preds, presence_weight=0.5, alpha=np.linspace(0.05, 0.95, 20), beta=np.linspace(1e-4, 0.4, 10)):
+def post_process(filenames, preds, presence_weight=0.5, alpha=np.linspace(0.05, 0.95, 20), beta=np.linspace(1e-4, 0.7, 10)):
     preds = get_top_2_predictions(preds)
     grid = []
     for a in alpha:
@@ -150,12 +144,21 @@ def post_process(filenames, preds, presence_weight=0.5, alpha=np.linspace(0.05, 
             acc_salience = acc_salience_total(label_dict)
             grid.append((a.item(), b.item(), acc_presence, acc_salience))
 
+    plot_grid_heatmap(grid, metric_index=2, title="Presence", cmap="viridis")
+    plot_grid_heatmap(grid, metric_index=3, title="Salience", cmap="viridis")
+
+    print("Best presence ", max(grid, key=lambda x: x[2]))
+    print("Best salience ", max(grid, key=lambda x: x[3]))
+
+    # df = pd.DataFrame(grid, columns=["alpha", "beta", "Presence", "Salience"])
+
     sorted_grid = sorted(
         grid,
         key=lambda x: presence_weight * x[2] + (1 - presence_weight) * x[3],
         reverse=True
     )
-    print(f"Best alpha: {sorted_grid[0][0]}, Best beta: {sorted_grid[0][1]}, Presence: {sorted_grid[0][2]}, Salience: {sorted_grid[0][3]}")
+
+    print(f"With score Best alpha: {sorted_grid[0][0]}, Best beta: {sorted_grid[0][1]}, Presence: {sorted_grid[0][2]}, Salience: {sorted_grid[0][3]}")
 
     best_alpha = sorted_grid[0][0]
     best_beta = sorted_grid[0][1]
@@ -168,26 +171,29 @@ def post_process(filenames, preds, presence_weight=0.5, alpha=np.linspace(0.05, 
 
 def main():
     argparser = argparse.ArgumentParser()
-    encoder = argparser.add_argument("--encoder", type=str, default="openface", help="Encoder to use")
+    encoder = argparser.add_argument("--encoder", type=str, default="imagebind", help="Encoder to use")
     only_basic = argparser.add_argument("--only_basic", action="store_true", help="Use only basic emotion samples")
     model = argparser.add_argument("--model", type=str, default="", help="Path to the model checkpoint")
 
     args = argparser.parse_args()
 
     # args.only_basic = True
-    args.model = os.path.join(ROOT_DIR, "data/baselines/simple/checkpoints", "epoch-200.pt")
+    # args.model = os.path.join(ROOT_DIR, "data/baselines/simple/checkpoints", "epoch-200.pt")
 
     # paths
     train_metadata = "/home/tim/Work/quantum/data/blemore/train_metadata.csv"
     test_metadata = "/home/tim/Work/quantum/data/blemore/test_metadata.csv"
 
     encoding_paths = {
-        "openface": "/home/tim/Work/quantum/data/blemore/encoded_videos/openface_npy/"
+        "openface": "/home/tim/Work/quantum/data/blemore/encoded_videos/openface_npy/",
+        "imagebind": "/home/tim/Work/quantum/data/blemore/encoded_videos/ImageBind/"
     }
 
-    if args.encoder == "openface":
-        encoding_folder = encoding_paths["openface"]
+    # if args.encoder == "openface":
+    encoding_folder = encoding_paths[args.encoder]
 
+    print(f"Using encoder: {args.encoder}")
+    print(f"Encoding folder: {encoding_folder}")
 
     train_df = pd.read_csv(train_metadata)
     train_records = train_df.to_dict(orient="records")
@@ -223,7 +229,7 @@ def main():
             total_loss = train(model, train_loader, optimizer, device, epoch)
             print(f"Epoch [{epoch + 1}/{hparams['num_epochs']}], Loss: {total_loss / len(train_loader):.4f}")
 
-            if epoch % 10 == 0:
+            if epoch != 0 and epoch % 10 == 0:
                 model.eval()
                 all_preds = []
                 val_loss = 0
@@ -238,7 +244,9 @@ def main():
                 val_filenames = val_dataset.filenames  # already filtered for missing files
 
                 # Grid search for best thresholds
-                best_alpha, best_beta, best_acc_presence, best_acc_salience = post_process(val_filenames, all_preds, presence_weight=0.5)
+                best_alpha, best_beta, best_acc_presence, best_acc_salience = post_process(val_filenames,
+                                                                                           all_preds,
+                                                                                           presence_weight=0.5)
 
                 print(f"Epoch {epoch + 1}/{hparams['num_epochs']}, "
                       f"Validation Loss: {val_loss / len(val_loader)}"
