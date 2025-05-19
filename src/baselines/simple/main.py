@@ -1,4 +1,7 @@
 import argparse
+import os
+import math
+
 import numpy as np
 import pandas as pd
 from torch.utils.data import DataLoader
@@ -6,9 +9,25 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
+
+from config import ROOT_DIR
 from src.baselines.simple.d3_dataset import D3Dataset
 from src.baselines.simple.utils import get_top_2_predictions, LABEL_TO_INDEX, probs2dict
 from src.tools.generic_accuracy.accuracy_funcs import acc_salience_total, acc_presence_total
+
+
+hparams = {
+    "batch_size": 32,
+    "max_seq_len": None,  # Set to None for no padding/truncation
+    "learning_rate": 0.0005,
+    "num_epochs": 500,
+    "weight_decay": 1e-5,
+    "dropout": 0.5,
+    "hidden_dim": 128,
+    "num_layers": 2,
+}
+
 
 
 def filter_basic_samples(filenames, labels, mix_flags):
@@ -58,18 +77,6 @@ def prepare_split(df, labels, fold_id, encoding_folder, only_basic=False):
     val_dataset = D3Dataset(filenames=val_files, labels=val_labels, encoding_dir=encoding_folder)
 
     return train_dataset, val_dataset
-
-
-hparams = {
-    "batch_size": 32,
-    "max_seq_len": None,  # Set to None for no padding/truncation
-    "learning_rate": 0.001,
-    "num_epochs": 500,
-    "weight_decay": 1e-4,
-    "dropout": 0.5,
-    "hidden_dim": 128,
-    "num_layers": 2,
-}
 
 
 class MultiLabelRNN(nn.Module):
@@ -133,7 +140,7 @@ def predict(data_loader, model, device):
     return y_pred_tensor.numpy()
 
 
-def post_process(filenames, preds, alpha=np.linspace(0.05, 0.95, 20), beta=np.linspace(1e-4, 0.4, 10), presence_weight=0.5):
+def post_process(filenames, preds, presence_weight=0.5, alpha=np.linspace(0.05, 0.95, 20), beta=np.linspace(1e-4, 0.4, 10)):
     preds = get_top_2_predictions(preds)
     grid = []
     for a in alpha:
@@ -141,7 +148,7 @@ def post_process(filenames, preds, alpha=np.linspace(0.05, 0.95, 20), beta=np.li
             label_dict = probs2dict(preds, filenames, a, b)
             acc_presence = acc_presence_total(label_dict)
             acc_salience = acc_salience_total(label_dict)
-            grid.append((a, b, acc_presence, acc_salience))
+            grid.append((a.item(), b.item(), acc_presence, acc_salience))
 
     sorted_grid = sorted(
         grid,
@@ -163,10 +170,12 @@ def main():
     argparser = argparse.ArgumentParser()
     encoder = argparser.add_argument("--encoder", type=str, default="openface", help="Encoder to use")
     only_basic = argparser.add_argument("--only_basic", action="store_true", help="Use only basic emotion samples")
+    model = argparser.add_argument("--model", type=str, default="", help="Path to the model checkpoint")
 
     args = argparser.parse_args()
 
-    args.only_basic = True
+    # args.only_basic = True
+    args.model = os.path.join(ROOT_DIR, "data/baselines/simple/checkpoints", "epoch-200.pt")
 
     # paths
     train_metadata = "/home/tim/Work/quantum/data/blemore/train_metadata.csv"
@@ -178,6 +187,7 @@ def main():
 
     if args.encoder == "openface":
         encoding_folder = encoding_paths["openface"]
+
 
     train_df = pd.read_csv(train_metadata)
     train_records = train_df.to_dict(orient="records")
@@ -200,6 +210,10 @@ def main():
         val_loader = DataLoader(val_dataset, batch_size=hparams["batch_size"], shuffle=False)
 
         model = MultiLabelRNN(input_dim=train_dataset.input_dim, output_dim=train_dataset.output_dim)
+
+        if args.model != '':
+            model.load_state_dict(torch.load(args.model))
+
         optimizer = torch.optim.Adam(model.parameters(), lr=hparams["learning_rate"],
                                      weight_decay=hparams["weight_decay"])
         model.to(device)
@@ -209,8 +223,7 @@ def main():
             total_loss = train(model, train_loader, optimizer, device, epoch)
             print(f"Epoch [{epoch + 1}/{hparams['num_epochs']}], Loss: {total_loss / len(train_loader):.4f}")
 
-            if epoch % 100 == 0:
-                continue
+            if epoch % 10 == 0:
                 model.eval()
                 all_preds = []
                 val_loss = 0
@@ -225,13 +238,16 @@ def main():
                 val_filenames = val_dataset.filenames  # already filtered for missing files
 
                 # Grid search for best thresholds
-                best_alpha, best_beta, best_acc_presence, best_acc_salience = post_process(val_filenames, all_preds, presence_weight=0.3)
+                best_alpha, best_beta, best_acc_presence, best_acc_salience = post_process(val_filenames, all_preds, presence_weight=0.5)
 
                 print(f"Epoch {epoch + 1}/{hparams['num_epochs']}, "
                       f"Validation Loss: {val_loss / len(val_loader)}"
                       f", Presence Accuracy: {best_acc_presence:.4f}, "
                       f"Salience Accuracy: {best_acc_salience:.4f}")
 
+            if epoch != 0 and epoch % 100 == 0:
+                save_path = os.path.join(ROOT_DIR, "data/baselines/simple/checkpoints", f"epoch-{epoch}.pt")
+                torch.save(model.state_dict(), save_path)
 
 
 if __name__ == "__main__":

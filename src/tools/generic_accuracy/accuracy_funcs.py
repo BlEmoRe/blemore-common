@@ -60,7 +60,7 @@ def acc_presence_total(preds):
         label = metadata2label(metadata)[filename]
         presence = acc_presence_single(label, predictions)
         res.append(presence)
-    return np.mean(res)
+    return np.mean(res).item()
 
 
 def acc_salience_total(preds):
@@ -88,7 +88,11 @@ def acc_salience_total(preds):
         else:
             salience = False
         res.append(salience)
-    return np.mean(res)
+
+    if len(res) == 0:
+        return 0.0
+    else:
+        return np.mean(res).item()
 
 
 

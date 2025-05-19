@@ -1,7 +1,10 @@
 *.json
 *.csv
 *.npz
+*.pt
 notebooks/inspect.ipynb
+
+fiddle.py
 
 # Python general
 __pycache__/
