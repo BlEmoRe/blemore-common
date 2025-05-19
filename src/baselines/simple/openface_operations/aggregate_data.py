@@ -4,8 +4,8 @@ from pathlib import Path
 
 from glob import glob
 
-from src.baselines.simple.config_openface import feature_columns
-from src.baselines.simple.create_dataset.openface_operations import get_success_ratio, interpolate_openface, \
+from src.baselines.simple.openface_operations.config_openface import feature_columns
+from src.baselines.simple.openface_operations.openface_helpers import get_success_ratio, interpolate_openface, \
     get_ok_confidence_ratio
 
 

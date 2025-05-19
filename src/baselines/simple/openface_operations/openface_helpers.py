@@ -1,5 +1,5 @@
 import numpy as np
-from src.baselines.simple.config_openface import feature_columns
+from src.baselines.simple.openface_operations.config_openface import feature_columns
 
 
 def get_success_ratio(df):
