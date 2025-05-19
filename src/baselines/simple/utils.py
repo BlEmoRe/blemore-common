@@ -15,7 +15,7 @@ def get_top_2_predictions(y_pred):
     sorted_indices = np.argsort(-y_pred, axis=1)  # Sort each row in descending order
 
     # Step 3: Select only the top `max_positive_labels` indices
-    top_k_indices = sorted_indices[:, :k]  # Keep only the top `max_positive_labels` per row
+    top_k_indices = sorted_indices[:, :2]  # Keep only the top `max_positive_labels` per row
 
     # Step 4: Create a mask to enforce at most `max_positive_labels` per row
     mask = np.zeros_like(y_pred, dtype=bool)  # Initialize mask with all False

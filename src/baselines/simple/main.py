@@ -8,6 +8,7 @@ import torch.nn.functional as F
 
 from src.baselines.simple.d3_dataset import D3Dataset
 from src.baselines.simple.utils import get_top_2_predictions, LABEL_TO_INDEX, probs2dict
+from src.tools.generic_accuracy.accuracy_funcs import acc_salience_total, acc_presence_total
 
 
 def filter_basic_samples(filenames, labels, mix_flags):
@@ -64,7 +65,7 @@ hparams = {
     "max_seq_len": None,  # Set to None for no padding/truncation
     "learning_rate": 0.001,
     "num_epochs": 500,
-    "weight_decay": 1e-5,
+    "weight_decay": 1e-4,
     "dropout": 0.5,
     "hidden_dim": 128,
     "num_layers": 2,
@@ -100,13 +101,22 @@ class MultiLabelRNN(nn.Module):
 def train(model, train_loader, optimizer, device, epoch):
     model.train()
     total_loss = 0
+
+    all_outputs = []
+
     for X_batch, y_batch in train_loader:
         X_batch, y_batch = X_batch.to(device), y_batch.to(device)
         optimizer.zero_grad()
         outputs, loss = model(X_batch, y_batch)
+
+        # all_outputs.append(outputs)
         loss.backward()
         optimizer.step()
         total_loss += loss.item()
+
+    # all_outputs = torch.cat(all_outputs, dim=0)
+    # print(f"Mean output: {all_outputs.mean(dim=0)}")
+
     return total_loss / len(train_loader)
 
 
@@ -123,13 +133,29 @@ def predict(data_loader, model, device):
     return y_pred_tensor.numpy()
 
 
-def post_process(filenames, preds, alpha=np.linspace(0.05, 0.95, 20), beta=np.linspace(1e-4, 0.4, 10)):
+def post_process(filenames, preds, alpha=np.linspace(0.05, 0.95, 20), beta=np.linspace(1e-4, 0.4, 10), presence_weight=0.5):
     preds = get_top_2_predictions(preds)
-
+    grid = []
     for a in alpha:
         for b in beta:
             label_dict = probs2dict(preds, filenames, a, b)
-            
+            acc_presence = acc_presence_total(label_dict)
+            acc_salience = acc_salience_total(label_dict)
+            grid.append((a, b, acc_presence, acc_salience))
+
+    sorted_grid = sorted(
+        grid,
+        key=lambda x: presence_weight * x[2] + (1 - presence_weight) * x[3],
+        reverse=True
+    )
+    print(f"Best alpha: {sorted_grid[0][0]}, Best beta: {sorted_grid[0][1]}, Presence: {sorted_grid[0][2]}, Salience: {sorted_grid[0][3]}")
+
+    best_alpha = sorted_grid[0][0]
+    best_beta = sorted_grid[0][1]
+    best_acc_presence = sorted_grid[0][2]
+    best_acc_salience = sorted_grid[0][3]
+
+    return best_alpha, best_beta, best_acc_presence, best_acc_salience
 
 
 
@@ -167,6 +193,9 @@ def main():
         print(f"Train dataset size: {len(train_dataset)}")
         print(f"Validation dataset size: {len(val_dataset)}")
 
+        print("Train dataset filenames:", len(train_dataset.filenames))
+        print("Validation dataset filenames:", len(val_dataset.filenames))
+
         train_loader = DataLoader(train_dataset, batch_size=hparams["batch_size"], shuffle=True)
         val_loader = DataLoader(val_dataset, batch_size=hparams["batch_size"], shuffle=False)
 
@@ -176,19 +205,33 @@ def main():
         model.to(device)
 
         for epoch in range(hparams["num_epochs"]):
+
             total_loss = train(model, train_loader, optimizer, device, epoch)
             print(f"Epoch [{epoch + 1}/{hparams['num_epochs']}], Loss: {total_loss / len(train_loader):.4f}")
 
-            # Validation step
-            model.eval()
-            val_loss = 0.0
-            with torch.no_grad():
-                for X_batch, y_batch in val_loader:
-                    X_batch, y_batch = X_batch.to(device), y_batch.to(device)
-                    outputs, loss = model(X_batch, y_batch)
-                    val_loss += loss.item()
+            if epoch % 100 == 0:
+                continue
+                model.eval()
+                all_preds = []
+                val_loss = 0
+                with torch.no_grad():
+                    for X_batch, y_batch in val_loader:
+                        X_batch, y_batch = X_batch.to(device), y_batch.to(device)
+                        preds, loss = model(X_batch, y_batch)
+                        val_loss += loss.item()
+                        all_preds.append(preds.cpu().numpy())
 
-            print(f"Epoch {epoch + 1}/{hparams['num_epochs']}, Validation Loss: {val_loss / len(val_loader)}")
+                all_preds = np.concatenate(all_preds, axis=0)
+                val_filenames = val_dataset.filenames  # already filtered for missing files
+
+                # Grid search for best thresholds
+                best_alpha, best_beta, best_acc_presence, best_acc_salience = post_process(val_filenames, all_preds, presence_weight=0.3)
+
+                print(f"Epoch {epoch + 1}/{hparams['num_epochs']}, "
+                      f"Validation Loss: {val_loss / len(val_loader)}"
+                      f", Presence Accuracy: {best_acc_presence:.4f}, "
+                      f"Salience Accuracy: {best_acc_salience:.4f}")
+
 
 
 if __name__ == "__main__":
