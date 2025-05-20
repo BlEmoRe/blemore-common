@@ -1,4 +1,4 @@
-from src.tools.filename_parser import parse_filename
+from utils.filename_parser import parse_filename
 
 
 def metadata2label(metadata):

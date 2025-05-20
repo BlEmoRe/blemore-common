@@ -1,16 +1,9 @@
 import numpy as np
 from collections import Counter
 
-
-LABEL_TO_INDEX = {
-    "ang": 0,
-    "disg": 1,
-    "fea": 2,
-    "hap": 3,
-    "sad": 4
-}
-
-INDEX_TO_LABEL = {v: k for k, v in LABEL_TO_INDEX.items()}
+from config import INDEX_TO_LABEL
+from utils.generic_accuracy.accuracy_funcs import acc_presence_total, acc_salience_total
+from visualizations import plot_grid_heatmap, summarize_prediction_distribution
 
 
 def get_top_2_predictions(y_pred):
@@ -28,6 +21,7 @@ def get_top_2_predictions(y_pred):
     ret = y_pred * mask
 
     return ret
+
 
 def probs2dict(y_pred,
                filenames,
@@ -83,6 +77,49 @@ def probs2dict(y_pred,
     return result
 
 
+def post_process(filenames, preds, presence_weight=0.5):
+    preds = get_top_2_predictions(preds)
+    grid = []
+
+    alpha = np.linspace(0.05, 0.95, 20)
+    beta = np.linspace(0.05, 0.95, 20)
+
+    for a in alpha:
+        for b in beta:
+            label_dict = probs2dict(preds, filenames, a, b)
+            acc_presence = acc_presence_total(label_dict)
+            acc_salience = acc_salience_total(label_dict)
+            grid.append((a.item(), b.item(), acc_presence, acc_salience))
+
+    plot_grid_heatmap(grid, metric_index=2, title="Presence", cmap="viridis")
+    plot_grid_heatmap(grid, metric_index=3, title="Salience", cmap="viridis")
+
+    print("Best presence ", max(grid, key=lambda x: x[2]))
+    print("Best salience ", max(grid, key=lambda x: x[3]))
+
+    # df = pd.DataFrame(grid, columns=["alpha", "beta", "Presence", "Salience"])
+
+    sorted_grid = sorted(
+        grid,
+        key=lambda x: presence_weight * x[2] + (1 - presence_weight) * x[3],
+        reverse=True
+    )
+
+    print(f"With score Best alpha: {sorted_grid[0][0]}, Best beta: {sorted_grid[0][1]}, Presence: {sorted_grid[0][2]}, Salience: {sorted_grid[0][3]}")
+
+    best_alpha = sorted_grid[0][0]
+    best_beta = sorted_grid[0][1]
+    best_acc_presence = sorted_grid[0][2]
+    best_acc_salience = sorted_grid[0][3]
+
+    # After best_alpha, best_beta have been found
+    final_preds = probs2dict(preds, filenames, best_alpha, best_beta)
+    summarize_prediction_distribution(final_preds)
+
+    return best_alpha, best_beta, best_acc_presence, best_acc_salience
+
+
+
 
 def main():
 
@@ -105,16 +142,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-#
-# def print_distributions(preds):
-#     # Count number of predicted emotions per sample
-#     num_emotions_per_sample = [len(p) for p in preds.values()]
-#
-#     # Count how many samples are single vs blended
-#     counts = Counter(num_emotions_per_sample)
-#
-#     print(f"\nPrediction distribution:")
-#     for k in sorted(counts):
-#         label = "Single emotion" if k == 1 else "Blended" if k == 2 else f"{k} emotions"
-#         print(f"  {label}: {counts[k]} samples")

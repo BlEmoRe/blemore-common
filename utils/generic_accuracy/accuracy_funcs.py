@@ -1,7 +1,7 @@
 import numpy as np
 
-from src.tools.filename_parser import parse_filename
-from src.tools.generic_accuracy.metadata2labels import metadata2label
+from utils.filename_parser import parse_filename
+from utils.generic_accuracy.metadata2labels import metadata2label
 
 
 def acc_presence_single(label, pred):

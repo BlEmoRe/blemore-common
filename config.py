@@ -2,3 +2,12 @@ import os
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
+LABEL_TO_INDEX = {
+    "ang": 0,
+    "disg": 1,
+    "fea": 2,
+    "hap": 3,
+    "sad": 4
+}
+
+INDEX_TO_LABEL = {v: k for k, v in LABEL_TO_INDEX.items()}

@@ -1,6 +1,6 @@
 import unittest
 
-from src.tools.generic_accuracy import accuracy_funcs
+from utils.generic_accuracy import accuracy_funcs
 
 
 class TestAccuracyMeasures(unittest.TestCase):
@@ -26,14 +26,16 @@ class TestAccuracyMeasures(unittest.TestCase):
 
     def test_acc_presence_single(self):
         self.assertTrue(accuracy_funcs.acc_presence_single(self.labels['correct_presence_only'], self.y_pred['correct_presence_only']))
-        self.assertFalse(accuracy_funcs.acc_presence_single(self.labels['incorrect_presence'], self.y_pred['incorrect_presence']))
+        self.assertFalse(
+            accuracy_funcs.acc_presence_single(self.labels['incorrect_presence'], self.y_pred['incorrect_presence']))
         self.assertTrue(accuracy_funcs.acc_presence_single(self.labels['correct_presence_salience'], self.y_pred['correct_presence_salience']))
         self.assertTrue(accuracy_funcs.acc_presence_single(self.labels['flipped_order_correct'], self.y_pred['flipped_order_correct']))
         self.assertTrue(accuracy_funcs.acc_presence_single(self.labels['wrong_salience_values'], self.y_pred['wrong_salience_values']))
 
     def test_acc_salience_single(self):
         self.assertTrue(accuracy_funcs.acc_salience_single(self.labels['correct_presence_salience'], self.y_pred['correct_presence_salience']))
-        self.assertFalse(accuracy_funcs.acc_salience_single(self.labels['incorrect_salience'], self.y_pred['incorrect_salience']))
+        self.assertFalse(
+            accuracy_funcs.acc_salience_single(self.labels['incorrect_salience'], self.y_pred['incorrect_salience']))
         self.assertTrue(accuracy_funcs.acc_salience_single(self.labels['flipped_order_correct'], self.y_pred['flipped_order_correct']))
         self.assertFalse(accuracy_funcs.acc_salience_single(self.labels['wrong_salience_values'], self.y_pred['wrong_salience_values']))
 

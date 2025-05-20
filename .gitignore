@@ -2,12 +2,12 @@
 *.csv
 *.npz
 *.pt
-notebooks/inspect.ipynb
+sandbox/inspect.ipynb
 
-torch2npy.py
+sandbox/torch2npy.py
 
-fiddle.py
-fiddle2.py
+sandbox/fiddle.py
+sandbox/fiddle2.py
 
 # Python general
 __pycache__/

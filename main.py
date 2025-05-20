@@ -1,21 +1,16 @@
 import argparse
 import os
-import math
 
 import numpy as np
 import pandas as pd
 from torch.utils.data import DataLoader
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 
+from config import ROOT_DIR, LABEL_TO_INDEX
+from datasets.d3_dataset import D3Dataset
+from model.models import MultiLabelRNN
+from post_processing import post_process
 
-
-from config import ROOT_DIR
-from src.baselines.simple.d3_dataset import D3Dataset
-from src.baselines.simple.utils import get_top_2_predictions, LABEL_TO_INDEX, probs2dict
-from src.baselines.simple.visualizations import plot_grid_heatmap, summarize_prediction_distribution
-from src.tools.generic_accuracy.accuracy_funcs import acc_salience_total, acc_presence_total
 
 
 hparams = {
@@ -80,32 +75,6 @@ def prepare_split(df, labels, fold_id, encoding_folder, only_basic=False):
     return train_dataset, val_dataset
 
 
-class MultiLabelRNN(nn.Module):
-    def __init__(self, input_dim, output_dim, hidden_dim=128):
-        super().__init__()
-        self.rnn = nn.GRU(input_dim, hidden_dim, batch_first=True, bidirectional=True)
-        self.fc = nn.Sequential(
-            nn.Linear(hidden_dim * 2, 64),  # ← note the *2 here
-            nn.ReLU(),
-            nn.Linear(64, output_dim),
-        )
-        self.log_softmax = nn.LogSoftmax(dim=1)
-
-    def forward(self, x, targets=None):
-        # x: [B, T, D]
-        _, h_n = self.rnn(x)  # h_n: [2, B, H] for bidirectional
-        h_n = h_n.permute(1, 0, 2).reshape(x.size(0), -1)  # [B, 2*H]
-        logits = self.fc(h_n)  # [B, C]
-        log_probs = self.log_softmax(logits)
-
-        loss = None
-        if targets is not None:
-            loss = F.kl_div(log_probs, targets, reduction="batchmean")
-
-        probs = torch.exp(log_probs)
-        return probs, loss
-
-
 def train(model, train_loader, optimizer, device, epoch):
     model.train()
     total_loss = 0
@@ -132,48 +101,6 @@ def predict(data_loader, model, device):
             y_pred_list.append(y_pred.cpu())
     y_pred_tensor = torch.cat(y_pred_list, dim=0)
     return y_pred_tensor.numpy()
-
-
-def post_process(filenames, preds, presence_weight=0.5):
-    preds = get_top_2_predictions(preds)
-    grid = []
-
-    alpha = np.linspace(0.05, 0.95, 20)
-    beta = np.linspace(0.05, 0.95, 20)
-
-    for a in alpha:
-        for b in beta:
-            label_dict = probs2dict(preds, filenames, a, b)
-            acc_presence = acc_presence_total(label_dict)
-            acc_salience = acc_salience_total(label_dict)
-            grid.append((a.item(), b.item(), acc_presence, acc_salience))
-
-    plot_grid_heatmap(grid, metric_index=2, title="Presence", cmap="viridis")
-    plot_grid_heatmap(grid, metric_index=3, title="Salience", cmap="viridis")
-
-    print("Best presence ", max(grid, key=lambda x: x[2]))
-    print("Best salience ", max(grid, key=lambda x: x[3]))
-
-    # df = pd.DataFrame(grid, columns=["alpha", "beta", "Presence", "Salience"])
-
-    sorted_grid = sorted(
-        grid,
-        key=lambda x: presence_weight * x[2] + (1 - presence_weight) * x[3],
-        reverse=True
-    )
-
-    print(f"With score Best alpha: {sorted_grid[0][0]}, Best beta: {sorted_grid[0][1]}, Presence: {sorted_grid[0][2]}, Salience: {sorted_grid[0][3]}")
-
-    best_alpha = sorted_grid[0][0]
-    best_beta = sorted_grid[0][1]
-    best_acc_presence = sorted_grid[0][2]
-    best_acc_salience = sorted_grid[0][3]
-
-    # After best_alpha, best_beta have been found
-    final_preds = probs2dict(preds, filenames, best_alpha, best_beta)
-    summarize_prediction_distribution(final_preds)
-
-    return best_alpha, best_beta, best_acc_presence, best_acc_salience
 
 
 

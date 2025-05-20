@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from config import ROOT_DIR
-from src.tools.generic_accuracy.accuracy_funcs import acc_presence_total, acc_salience_total
+from utils.generic_accuracy.accuracy_funcs import acc_presence_total, acc_salience_total
 
 
 def metadata2labels(df):
