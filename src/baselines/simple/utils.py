@@ -1,4 +1,6 @@
 import numpy as np
+from collections import Counter
+
 
 LABEL_TO_INDEX = {
     "ang": 0,
@@ -7,6 +9,7 @@ LABEL_TO_INDEX = {
     "hap": 3,
     "sad": 4
 }
+
 INDEX_TO_LABEL = {v: k for k, v in LABEL_TO_INDEX.items()}
 
 
@@ -52,12 +55,13 @@ def probs2dict(y_pred,
     for fname, vec in zip(filenames, y_pred):
         nonzero = np.where(vec > 0)[0]
 
-        if len(nonzero) != 2:
-            # Return original (unnormalized) values if not a blend
-            preds = [
-                {"emotion": INDEX_TO_LABEL[i], "salience": round(100 * vec[i], 1)}
-                for i in nonzero
-            ]
+        if len(nonzero) == 0:
+            preds = [{"emotion": "neu", "salience": 100.0}]
+            result[fname] = preds
+            continue
+
+        if len(nonzero) == 1:
+            preds = [{"emotion": INDEX_TO_LABEL[nonzero[0]], "salience": 100.0}]
             result[fname] = preds
             continue
 
@@ -77,3 +81,40 @@ def probs2dict(y_pred,
         ]
 
     return result
+
+
+
+def main():
+
+    # Example usage
+    y_pred = np.array([[0.8, 0.1, 0.05, 0.03, 0.02],
+                       [0.2, 0.7, 0.05, 0.03, 0.02],
+                       [0.1, 0.1, 0.7, 0.05, 0.05],
+                      [0.0, 0.0, 0.0, 0.0, 0.0],
+                       [0.9, 0.0, 0.0, 0.0, 0.0],
+                       ])  # Example predictions
+
+    y_pred = get_top_2_predictions(y_pred)
+
+    filenames = ["file1", "file2", "file3", "file4", "file5"]
+
+    preds = probs2dict(y_pred, filenames, presence_threshold=0.1, salience_threshold=0.9)
+    for i in preds.items():
+        print(i)
+
+
+if __name__ == "__main__":
+    main()
+
+#
+# def print_distributions(preds):
+#     # Count number of predicted emotions per sample
+#     num_emotions_per_sample = [len(p) for p in preds.values()]
+#
+#     # Count how many samples are single vs blended
+#     counts = Counter(num_emotions_per_sample)
+#
+#     print(f"\nPrediction distribution:")
+#     for k in sorted(counts):
+#         label = "Single emotion" if k == 1 else "Blended" if k == 2 else f"{k} emotions"
+#         print(f"  {label}: {counts[k]} samples")

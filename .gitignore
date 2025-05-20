@@ -4,6 +4,8 @@
 *.pt
 notebooks/inspect.ipynb
 
+torch2npy.py
+
 fiddle.py
 
 # Python general

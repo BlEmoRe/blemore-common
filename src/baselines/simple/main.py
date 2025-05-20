@@ -14,7 +14,7 @@ import torch.nn.functional as F
 from config import ROOT_DIR
 from src.baselines.simple.d3_dataset import D3Dataset
 from src.baselines.simple.utils import get_top_2_predictions, LABEL_TO_INDEX, probs2dict
-from src.baselines.simple.visualizations import plot_grid_heatmap
+from src.baselines.simple.visualizations import plot_grid_heatmap, summarize_prediction_distribution
 from src.tools.generic_accuracy.accuracy_funcs import acc_salience_total, acc_presence_total
 
 
@@ -47,7 +47,7 @@ def create_labels(records):
         mix = record["mix"]
 
         if e1 not in LABEL_TO_INDEX:
-            continue  # skip neutral or invalid
+            continue  # skip neutral
 
         if mix == 0:
             labels[i, LABEL_TO_INDEX[e1]] = 1
@@ -134,9 +134,13 @@ def predict(data_loader, model, device):
     return y_pred_tensor.numpy()
 
 
-def post_process(filenames, preds, presence_weight=0.5, alpha=np.linspace(0.05, 0.95, 20), beta=np.linspace(1e-4, 0.7, 10)):
+def post_process(filenames, preds, presence_weight=0.5):
     preds = get_top_2_predictions(preds)
     grid = []
+
+    alpha = np.linspace(0.05, 0.95, 20)
+    beta = np.linspace(0.05, 0.95, 20)
+
     for a in alpha:
         for b in beta:
             label_dict = probs2dict(preds, filenames, a, b)
@@ -165,13 +169,17 @@ def post_process(filenames, preds, presence_weight=0.5, alpha=np.linspace(0.05, 
     best_acc_presence = sorted_grid[0][2]
     best_acc_salience = sorted_grid[0][3]
 
+    # After best_alpha, best_beta have been found
+    final_preds = probs2dict(preds, filenames, best_alpha, best_beta)
+    summarize_prediction_distribution(final_preds)
+
     return best_alpha, best_beta, best_acc_presence, best_acc_salience
 
 
 
 def main():
     argparser = argparse.ArgumentParser()
-    encoder = argparser.add_argument("--encoder", type=str, default="imagebind", help="Encoder to use")
+    encoder = argparser.add_argument("--encoder", type=str, default="videoswintransformer", help="Encoder to use")
     only_basic = argparser.add_argument("--only_basic", action="store_true", help="Use only basic emotion samples")
     model = argparser.add_argument("--model", type=str, default="", help="Path to the model checkpoint")
 
@@ -186,7 +194,10 @@ def main():
 
     encoding_paths = {
         "openface": "/home/tim/Work/quantum/data/blemore/encoded_videos/openface_npy/",
-        "imagebind": "/home/tim/Work/quantum/data/blemore/encoded_videos/ImageBind/"
+        "imagebind": "/home/tim/Work/quantum/data/blemore/encoded_videos/ImageBind/",
+        "clip": "/home/tim/Work/quantum/data/blemore/encoded_videos/CLIP_npy/",
+        "dinov2": "/home/tim/Work/quantum/data/blemore/encoded_videos/DINOv2/",
+        "videoswintransformer": "/home/tim/Work/quantum/data/blemore/encoded_videos/VideoSwinTransformer/",
     }
 
     # if args.encoder == "openface":

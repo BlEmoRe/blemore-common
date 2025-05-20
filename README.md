@@ -1,5 +1,9 @@
 # BlEmoRe-common
 
+Current model with ImageBInd gives imrpovements around 150 epochs. 
+
+Monitor the accuracy on validation sets over time and save the best model. 
+
 ## Tools
 
 ### Accuracy metrics
