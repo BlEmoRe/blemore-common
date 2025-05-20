@@ -7,6 +7,7 @@ notebooks/inspect.ipynb
 torch2npy.py
 
 fiddle.py
+fiddle2.py
 
 # Python general
 __pycache__/

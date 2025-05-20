@@ -179,7 +179,7 @@ def post_process(filenames, preds, presence_weight=0.5):
 
 def main():
     argparser = argparse.ArgumentParser()
-    encoder = argparser.add_argument("--encoder", type=str, default="videoswintransformer", help="Encoder to use")
+    encoder = argparser.add_argument("--encoder", type=str, default="imagebind", help="Encoder to use")
     only_basic = argparser.add_argument("--only_basic", action="store_true", help="Use only basic emotion samples")
     model = argparser.add_argument("--model", type=str, default="", help="Path to the model checkpoint")
 

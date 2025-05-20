@@ -104,12 +104,16 @@ def main():
               'A102_disg_int2_ver1': [{'emotion': 'disg', 'salience': 100.0}],
               'A55_fea_int1_ver2': [{'emotion': 'hap', 'salience': 100.0}],
               'A55_fea_int3_ver1': [{'emotion': 'fea', 'salience': 100.0}],
+
               'A407_mix_disg_hap_50_50_ver1': [{'emotion': 'disg', 'salience': 50},
                                                {'emotion': 'hap', 'salience': 50}],
+
               'A407_mix_disg_hap_70_30_ver1': [{'emotion': 'disg', 'salience': 30.0},
                                                {'emotion': 'hap', 'salience': 70.0}],
+
               'A411_mix_ang_hap_30_70_ver1': [{'emotion': 'hap', 'salience': 70.0},
                                               {'emotion': 'ang', 'salience': 30.0}],
+
               'A411_mix_ang_hap_50_50_ver1': [{'emotion': 'ang', 'salience': 50.0},
                                               {'emotion': 'hap', 'salience': 50.0}],
               'A427_mix_ang_hap_30_70_ver1': [{'emotion': 'hap', 'salience': 70.0},
