@@ -4,6 +4,9 @@ import torch
 from torch.utils.data import Dataset
 
 
+# STANDARDIZE THE DATA FOR CHRISTS’S SAKE!!!!!!
+
+
 class D3Dataset(Dataset):
     """ PyTorch Dataset for sequence-based video emotion recognition """
 

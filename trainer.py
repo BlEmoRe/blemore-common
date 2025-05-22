@@ -1,0 +1,55 @@
+import torch
+import numpy as np
+
+from post_processing import grid_search_thresholds
+
+
+class Trainer(object):
+
+    def __init__(self, model, optimizer, data_loader, valid_data_loader=None):
+        self.model = model
+        self.optimizer = optimizer
+
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        print(f"Using device: {self.device}")
+        self.model.to(self.device)
+
+        self.data_loader = data_loader
+        self.valid_data_loader = valid_data_loader
+
+    def train_epoch(self):
+        self.model.train()
+        total_loss = 0
+
+        for batch_idx, (data, target) in enumerate(self.data_loader):
+            data, target = data.to(self.device), target.to(self.device)
+
+            self.optimizer.zero_grad()
+            output, loss = self.model(data, target)
+            loss.backward()
+            self.optimizer.step()
+            total_loss += loss.item()
+
+        avg_loss = total_loss / len(self.data_loader)
+        return avg_loss
+
+    def validate(self):
+        self.model.eval()
+        total_loss = 0
+        all_preds = []
+
+        with torch.no_grad():
+            for data, target in self.valid_data_loader:
+                data, target = data.to(self.device), target.to(self.device)
+                output, loss = self.model(data, target)
+                total_loss += loss.item()
+                all_preds.append(output.cpu().numpy())
+
+        all_preds = np.concatenate(all_preds, axis=0)
+        val_filenames = self.valid_data_loader.dataset.filenames
+
+        best_alpha, best_beta, best_acc_presence, best_acc_salience = grid_search_thresholds(all_preds, val_filenames)
+        avg_loss = total_loss / len(self.valid_data_loader)
+        return avg_loss, best_alpha, best_beta, best_acc_presence, best_acc_salience
+
+

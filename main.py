@@ -9,7 +9,11 @@ import torch
 from config import ROOT_DIR, LABEL_TO_INDEX
 from datasets.d3_dataset import D3Dataset
 from model.models import MultiLabelRNN
-from post_processing import post_process
+from post_processing import grid_search_thresholds
+
+
+
+# STANDARDIZE THE DATA FOR CHRISTS’S SAKE!!!!!!
 
 
 
@@ -182,9 +186,9 @@ def main():
                 val_filenames = val_dataset.filenames  # already filtered for missing files
 
                 # Grid search for best thresholds
-                best_alpha, best_beta, best_acc_presence, best_acc_salience = post_process(val_filenames,
-                                                                                           all_preds,
-                                                                                           presence_weight=0.5)
+                best_alpha, best_beta, best_acc_presence, best_acc_salience = grid_search_thresholds(val_filenames,
+                                                                                                     all_preds,
+                                                                                                     presence_weight=0.5)
 
                 print(f"Epoch {epoch + 1}/{hparams['num_epochs']}, "
                       f"Validation Loss: {val_loss / len(val_loader)}"

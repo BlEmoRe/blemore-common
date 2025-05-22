@@ -77,7 +77,7 @@ def probs2dict(y_pred,
     return result
 
 
-def post_process(filenames, preds, presence_weight=0.5):
+def grid_search_thresholds(filenames, preds, presence_weight=0.5, debug_plots=True):
     preds = get_top_2_predictions(preds)
     grid = []
 
@@ -91,11 +91,12 @@ def post_process(filenames, preds, presence_weight=0.5):
             acc_salience = acc_salience_total(label_dict)
             grid.append((a.item(), b.item(), acc_presence, acc_salience))
 
-    plot_grid_heatmap(grid, metric_index=2, title="Presence", cmap="viridis")
-    plot_grid_heatmap(grid, metric_index=3, title="Salience", cmap="viridis")
+    if debug_plots:
+        plot_grid_heatmap(grid, metric_index=2, title="Presence", cmap="viridis")
+        plot_grid_heatmap(grid, metric_index=3, title="Salience", cmap="viridis")
 
-    print("Best presence ", max(grid, key=lambda x: x[2]))
-    print("Best salience ", max(grid, key=lambda x: x[3]))
+    # print("Best presence ", max(grid, key=lambda x: x[2]))
+    # print("Best salience ", max(grid, key=lambda x: x[3]))
 
     # df = pd.DataFrame(grid, columns=["alpha", "beta", "Presence", "Salience"])
 
@@ -105,7 +106,7 @@ def post_process(filenames, preds, presence_weight=0.5):
         reverse=True
     )
 
-    print(f"With score Best alpha: {sorted_grid[0][0]}, Best beta: {sorted_grid[0][1]}, Presence: {sorted_grid[0][2]}, Salience: {sorted_grid[0][3]}")
+    # print(f"With score Best alpha: {sorted_grid[0][0]}, Best beta: {sorted_grid[0][1]}, Presence: {sorted_grid[0][2]}, Salience: {sorted_grid[0][3]}")
 
     best_alpha = sorted_grid[0][0]
     best_beta = sorted_grid[0][1]
