@@ -11,7 +11,8 @@ from datasets.d3_dataset import D3Dataset
 from model.models import MultiLabelRNN
 from post_processing import grid_search_thresholds
 
-
+from trainer import Trainer
+import matplotlib.pyplot as plt
 
 # STANDARDIZE THE DATA FOR CHRISTS’S SAKE!!!!!!
 
@@ -21,7 +22,7 @@ hparams = {
     "batch_size": 32,
     "max_seq_len": None,  # Set to None for no padding/truncation
     "learning_rate": 0.0005,
-    "num_epochs": 500,
+    "num_epochs": 100,
     "weight_decay": 1e-4,
     # "dropout": 0.5,
     # "hidden_dim": 128,
@@ -77,35 +78,6 @@ def prepare_split(df, labels, fold_id, encoding_folder, only_basic=False):
     val_dataset = D3Dataset(filenames=val_files, labels=val_labels, encoding_dir=encoding_folder)
 
     return train_dataset, val_dataset
-
-
-def train(model, train_loader, optimizer, device, epoch):
-    model.train()
-    total_loss = 0
-
-    for X_batch, y_batch in train_loader:
-        X_batch, y_batch = X_batch.to(device), y_batch.to(device)
-        optimizer.zero_grad()
-        outputs, loss = model(X_batch, y_batch)
-        loss.backward()
-        optimizer.step()
-        total_loss += loss.item()
-
-    return total_loss / len(train_loader)
-
-
-def predict(data_loader, model, device):
-    model.eval()
-    y_pred_list = []
-
-    with torch.no_grad():
-        for X_batch, y_batch in data_loader:
-            X_batch = X_batch.to(device)
-            y_pred, _ = model(X_batch)
-            y_pred_list.append(y_pred.cpu())
-    y_pred_tensor = torch.cat(y_pred_list, dim=0)
-    return y_pred_tensor.numpy()
-
 
 
 def main():
@@ -166,38 +138,51 @@ def main():
                                      weight_decay=hparams["weight_decay"])
         model.to(device)
 
-        for epoch in range(hparams["num_epochs"]):
+        trainer = Trainer(model=model, optimizer=optimizer, data_loader=train_loader,
+                          epochs=hparams["num_epochs"], valid_data_loader=val_loader)
 
-            total_loss = train(model, train_loader, optimizer, device, epoch)
-            print(f"Epoch [{epoch + 1}/{hparams['num_epochs']}], Loss: {total_loss / len(train_loader):.4f}")
+        res = trainer.train()
 
-            if epoch != 0 and epoch % 10 == 0:
-                model.eval()
-                all_preds = []
-                val_loss = 0
-                with torch.no_grad():
-                    for X_batch, y_batch in val_loader:
-                        X_batch, y_batch = X_batch.to(device), y_batch.to(device)
-                        preds, loss = model(X_batch, y_batch)
-                        val_loss += loss.item()
-                        all_preds.append(preds.cpu().numpy())
+        df = pd.DataFrame(res)
 
-                all_preds = np.concatenate(all_preds, axis=0)
-                val_filenames = val_dataset.filenames  # already filtered for missing files
+        # Plotting
+        fig, axs = plt.subplots(2, 2, figsize=(12, 8))
 
-                # Grid search for best thresholds
-                best_alpha, best_beta, best_acc_presence, best_acc_salience = grid_search_thresholds(val_filenames,
-                                                                                                     all_preds,
-                                                                                                     presence_weight=0.5)
+        # Losses
+        axs[0, 0].plot(df["epoch"], df["train_loss"], label="Train Loss")
+        if "val_loss" in df.columns and df["val_loss"].notna().any():
+            axs[0, 0].plot(df["epoch"], df["val_loss"], label="Validation Loss")
+        axs[0, 0].set_title("Loss per Epoch")
+        axs[0, 0].set_xlabel("Epoch")
+        axs[0, 0].set_ylabel("Loss")
+        axs[0, 0].legend()
 
-                print(f"Epoch {epoch + 1}/{hparams['num_epochs']}, "
-                      f"Validation Loss: {val_loss / len(val_loader)}"
-                      f", Presence Accuracy: {best_acc_presence:.4f}, "
-                      f"Salience Accuracy: {best_acc_salience:.4f}")
+        # Accuracy presence
+        axs[0, 1].plot(df["epoch"], df["best_acc_presence"], label="Accuracy Presence", color='green')
+        axs[0, 1].set_title("Best Accuracy (Presence)")
+        axs[0, 1].set_xlabel("Epoch")
+        axs[0, 1].set_ylabel("Accuracy")
+        axs[0, 1].legend()
 
-            if epoch != 0 and epoch % 100 == 0:
-                save_path = os.path.join(ROOT_DIR, "data/baselines/simple/checkpoints", f"epoch-{epoch}.pt")
-                torch.save(model.state_dict(), save_path)
+        # Accuracy salience
+        axs[1, 0].plot(df["epoch"], df["best_acc_salience"], label="Accuracy Salience", color='orange')
+        axs[1, 0].set_title("Best Accuracy (Salience)")
+        axs[1, 0].set_xlabel("Epoch")
+        axs[1, 0].set_ylabel("Accuracy")
+        axs[1, 0].legend()
+
+        # Alpha & Beta
+        axs[1, 1].plot(df["epoch"], df["best_alpha"], label="Alpha", linestyle='--')
+        axs[1, 1].plot(df["epoch"], df["best_beta"], label="Beta", linestyle='-.')
+        axs[1, 1].set_title("Best Alpha & Beta")
+        axs[1, 1].set_xlabel("Epoch")
+        axs[1, 1].legend()
+
+        plt.tight_layout()
+        plt.show()
+
+
+
 
 
 if __name__ == "__main__":
