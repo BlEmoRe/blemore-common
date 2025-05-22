@@ -4,13 +4,10 @@ import torch
 from torch.utils.data import Dataset
 
 
-# STANDARDIZE THE DATA FOR CHRISTS’S SAKE!!!!!!
-
-
 class D3Dataset(Dataset):
     """ PyTorch Dataset for sequence-based video emotion recognition """
 
-    def __init__(self, filenames, labels, encoding_dir, max_seq_len=400):
+    def __init__(self, filenames, labels, encoding_dir, max_seq_len=400, mean=None, std=None):
         self.encoding_dir = encoding_dir
         self.max_seq_len = max_seq_len  # optionally pad/truncate
 
@@ -24,6 +21,9 @@ class D3Dataset(Dataset):
         self.filenames = [filenames[i] for i in valid]
         self.labels = labels[valid]
 
+        self.mean = mean
+        self.std = std
+
         if len(self.filenames) == 0:
             raise RuntimeError("No valid video files found in the encoding directory.")
 
@@ -36,6 +36,9 @@ class D3Dataset(Dataset):
 
         if self.max_seq_len:
             x = self._pad_or_truncate(x)
+
+        if self.mean is not None and self.std is not None:
+            x = (x - self.mean) / self.std
 
         x = torch.tensor(x, dtype=torch.float32)
         y = torch.tensor(self.labels[idx], dtype=torch.float32)

@@ -45,14 +45,7 @@ class Trainer(object):
                 output, loss = self.model(data, target)
                 total_loss += loss.item()
 
-                preds = torch.topk(output, 1)
-
-                all_top2 = {
-                    "values": preds[0].cpu().numpy(),
-                    "indices": preds[1].cpu().numpy(),
-                }
-
-                all_preds.append(all_top2)
+                all_preds.append(output.cpu().numpy())
 
         all_preds = np.concatenate(all_preds, axis=0)
         val_filenames = self.valid_data_loader.dataset.filenames

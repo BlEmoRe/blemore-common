@@ -79,37 +79,6 @@ def probs2dict(y_pred,
     return result
 
 
-def fast_probs2dict(top2_indices, top2_probs, filenames, alpha, beta):
-    result = {}
-    for fname, (idx_pair, prob_pair) in zip(filenames, zip(top2_indices, top2_probs)):
-        i, j = idx_pair
-        p1, p2 = prob_pair
-
-        if p1 < alpha and p2 < alpha:
-            preds = [{"emotion": "neu", "salience": 100.0}]
-            result[fname] = preds
-            continue
-
-        if p1 >= alpha and p2 < alpha:
-            preds = [{"emotion": INDEX_TO_LABEL[i], "salience": 100.0}]
-            result[fname] = preds
-            continue
-
-        if abs(p1 - p2) <= beta:
-            sal1, sal2 = 0.5, 0.5
-        elif p1 > p2:
-            sal1, sal2 = 0.7, 0.3
-        else:
-            sal1, sal2 = 0.3, 0.7
-
-        result[fname] = [
-            {"emotion": INDEX_TO_LABEL[i], "salience": round(100 * sal1, 1)},
-            {"emotion": INDEX_TO_LABEL[j], "salience": round(100 * sal2, 1)}
-        ]
-
-    return dict(result)
-
-
 
 def grid_search_thresholds(filenames, preds, presence_weight=0.5, debug_plots=True):
 
@@ -171,20 +140,6 @@ def main():
     filenames = ["file1", "file2", "file3", "file4", "file5"]
 
     preds = probs2dict(y_pred, filenames, presence_threshold=0.1, salience_threshold=0.1)
-    for i in preds.items():
-        print(i)
-
-
-    y_pred_torch = torch.from_numpy(y_pred)
-    y_pred_topk = torch.topk(y_pred_torch, 2, dim=1)
-
-    filenames = ["file1", "file2", "file3", "file4", "file5"]
-
-    preds = fast_probs2dict(y_pred_topk[1].numpy(),
-                            y_pred_topk[0].numpy(),
-                            filenames,
-                            0.1,
-                            0.1)
     for i in preds.items():
         print(i)
 

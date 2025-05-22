@@ -14,9 +14,7 @@ from post_processing import grid_search_thresholds
 from trainer import Trainer
 import matplotlib.pyplot as plt
 
-# STANDARDIZE THE DATA FOR CHRISTS’S SAKE!!!!!!
-
-
+from utils.standardization import compute_train_stats
 
 hparams = {
     "batch_size": 32,
@@ -74,8 +72,13 @@ def prepare_split(df, labels, fold_id, encoding_folder, only_basic=False):
     train_files, train_labels = extract_subset(train_mask)
     val_files, val_labels = extract_subset(val_mask)
 
-    train_dataset = D3Dataset(filenames=train_files, labels=train_labels, encoding_dir=encoding_folder)
-    val_dataset = D3Dataset(filenames=val_files, labels=val_labels, encoding_dir=encoding_folder)
+    # mean, std = compute_train_stats(train_files, encoding_folder)
+
+    mean=None
+    std=None
+
+    train_dataset = D3Dataset(filenames=train_files, labels=train_labels, encoding_dir=encoding_folder, mean=mean, std=std)
+    val_dataset = D3Dataset(filenames=val_files, labels=val_labels, encoding_dir=encoding_folder, mean=mean, std=std)
 
     return train_dataset, val_dataset
 
