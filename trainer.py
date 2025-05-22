@@ -52,7 +52,7 @@ class Trainer(object):
                     "indices": preds[1].cpu().numpy(),
                 }
 
-                all_preds.append(output.cpu().numpy())
+                all_preds.append(all_top2)
 
         all_preds = np.concatenate(all_preds, axis=0)
         val_filenames = self.valid_data_loader.dataset.filenames
