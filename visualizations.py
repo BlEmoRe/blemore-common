@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from collections import Counter
-
+import pandas as pd
 
 def plot_grid_heatmap(grid, metric_index, title, cmap="viridis"):
     """
@@ -66,5 +66,45 @@ def summarize_prediction_distribution(label_dict):
     plt.title("Distribution of Predicted Emotion Types")
     plt.ylabel("Count")
     plt.grid(axis="y", linestyle="--", alpha=0.7)
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_results(res):
+    df = pd.DataFrame(res)
+
+    # Plotting
+    fig, axs = plt.subplots(2, 2, figsize=(12, 8))
+
+    # Losses
+    axs[0, 0].plot(df["epoch"], df["train_loss"], label="Train Loss")
+    if "val_loss" in df.columns and df["val_loss"].notna().any():
+        axs[0, 0].plot(df["epoch"], df["val_loss"], label="Validation Loss")
+    axs[0, 0].set_title("Loss per Epoch")
+    axs[0, 0].set_xlabel("Epoch")
+    axs[0, 0].set_ylabel("Loss")
+    axs[0, 0].legend()
+
+    # Accuracy presence
+    axs[0, 1].plot(df["epoch"], df["best_acc_presence"], label="Accuracy Presence", color='green')
+    axs[0, 1].set_title("Best Accuracy (Presence)")
+    axs[0, 1].set_xlabel("Epoch")
+    axs[0, 1].set_ylabel("Accuracy")
+    axs[0, 1].legend()
+
+    # Accuracy salience
+    axs[1, 0].plot(df["epoch"], df["best_acc_salience"], label="Accuracy Salience", color='orange')
+    axs[1, 0].set_title("Best Accuracy (Salience)")
+    axs[1, 0].set_xlabel("Epoch")
+    axs[1, 0].set_ylabel("Accuracy")
+    axs[1, 0].legend()
+
+    # Alpha & Beta
+    axs[1, 1].plot(df["epoch"], df["best_alpha"], label="Alpha", linestyle='--')
+    axs[1, 1].plot(df["epoch"], df["best_beta"], label="Beta", linestyle='-.')
+    axs[1, 1].set_title("Best Alpha & Beta")
+    axs[1, 1].set_xlabel("Epoch")
+    axs[1, 1].legend()
+
     plt.tight_layout()
     plt.show()

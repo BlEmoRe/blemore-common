@@ -60,13 +60,18 @@ class Trainer(object):
         avg_loss = total_loss / len(self.valid_data_loader)
         return avg_loss, best_alpha, best_beta, best_acc_presence, best_acc_salience
 
-    def train(self):
+    def train(self, writer=None):
         results = []
 
         for epoch in range(self.epochs):
             train_loss = self.train_epoch()
             print(f"Epoch [{epoch + 1}/{self.epochs}], Train Loss: {train_loss:.4f}")
 
+            # Log training loss
+            if writer:
+                writer.add_scalar("Loss/train", train_loss, epoch)
+
+            # Validation every 10 epochs
             if self.valid_data_loader and epoch % 10 == 0:
                 val_loss, best_alpha, best_beta, best_acc_presence, best_acc_salience = self.validate()
                 print(f"Epoch [{epoch + 1}/{self.epochs}], "
@@ -75,6 +80,14 @@ class Trainer(object):
                       f"Best Beta: {best_beta:.4f}, "
                       f"Best Acc Presence: {best_acc_presence:.4f}, "
                       f"Best Acc Salience: {best_acc_salience:.4f}")
+
+                # Log validation metrics
+                if writer:
+                    writer.add_scalar("Loss/val", val_loss, epoch)
+                    writer.add_scalar("Accuracy/presence", best_acc_presence, epoch)
+                    writer.add_scalar("Accuracy/salience", best_acc_salience, epoch)
+                    writer.add_scalar("Alpha", best_alpha, epoch)
+                    writer.add_scalar("Beta", best_beta, epoch)
 
             results.append({
                 "epoch": epoch + 1,
