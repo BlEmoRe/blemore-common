@@ -1,32 +1,47 @@
+import entmax
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from entmax import sparsemax, entmax15
 
 
 class MultiLabelLinearNN(nn.Module):
-    def __init__(self, input_dim, output_dim, dropout_rate=0.2):
+    def __init__(self, input_dim, output_dim, activation="entmax15", dropout_rate=0.2):
         super(MultiLabelLinearNN, self).__init__()
+        self.activation_type = activation
+
         self.fc = nn.Sequential(
             nn.Linear(input_dim, 128),
             nn.ReLU(),
-            nn.Dropout(dropout_rate),  # Dropout Regularization
+            nn.Dropout(dropout_rate),
             nn.Linear(128, 64),
             nn.ReLU(),
-            nn.Dropout(dropout_rate),  # Another Dropout Layer
-            nn.Linear(64, output_dim),
-            nn.LogSoftmax(dim=1)  # LogSoftmax instead of Softmax
+            nn.Dropout(dropout_rate),
+            nn.Linear(64, output_dim)
         )
 
     def forward(self, x, targets=None):
-        log_probs = self.fc(x)
+        logits = self.fc(x)
+
+        # Apply chosen sparse activation
+        if self.activation_type == "sparsemax":
+            probs = sparsemax(logits, dim=1)
+        elif self.activation_type == "entmax15":
+            probs = entmax15(logits, dim=1)
+        elif self.activation_type == "softmax":
+            probs = F.softmax(logits, dim=1)
+        else:
+            raise ValueError(f"Unknown activation type: {self.activation_type}")
 
         loss = None
         if targets is not None:
-            loss = F.kl_div(log_probs, targets, reduction="batchmean")
+            # KL divergence expects log probs
+            log_probs = probs.clamp(min=1e-8).log()
+            valid = targets.sum(dim=1) > 0  # skip all-zero (neutral) targets
+            if valid.any():
+                loss = F.kl_div(log_probs[valid], targets[valid], reduction="batchmean")
 
-        probs = torch.exp(log_probs)
         return probs, loss
-
 
 class MultiLabelRNN(nn.Module):
 
