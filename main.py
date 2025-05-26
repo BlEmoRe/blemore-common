@@ -8,7 +8,7 @@ from trainer import Trainer
 
 from utils.create_soft_labels import create_labels
 from utils.set_splitting import prepare_split_3d, prepare_split_2d
-
+import os
 
 # 🔧 1. Add early stopping or checkpointing
 # Let validation metrics decide the epoch — not fixed num_epochs.
@@ -34,32 +34,41 @@ hparams = {
     "batch_size": 32,
     "max_seq_len": None,  # Set to None for no padding/truncation
     "learning_rate": 0.0005,
-    "num_epochs": 200,
-    "weight_decay": 1e-2,
+    "num_epochs": 10,
+    "weight_decay": 1e-4,
 }
 
 
 def main():
+
+    data_folder = "/home/tim/Work/quantum/data/blemore/"
+
     # paths
-    train_metadata = "/home/tim/Work/quantum/data/blemore/train_metadata.csv"
-    test_metadata = "/home/tim/Work/quantum/data/blemore/test_metadata.csv"
+    train_metadata = os.path.join(data_folder, "train_metadata.csv")
+    test_metadata = os.path.join(data_folder, "test_metadata.csv")
+
+    # Encoding paths
+    # 3D encodings are for RNN models, 2D encodings are for linear models
+    # These paths should point to the directories where the encoded video features are stored.
+    # Make sure these directories exist and contain the expected .npy files.
 
     encoding_paths_3d = {
-        "openface": "/home/tim/Work/quantum/data/blemore/encoded_videos/openface_npy/",
-        "imagebind": "/home/tim/Work/quantum/data/blemore/encoded_videos/ImageBind/",
-        "clip": "/home/tim/Work/quantum/data/blemore/encoded_videos/CLIP_npy/",
-        "dinov2": "/home/tim/Work/quantum/data/blemore/encoded_videos/DINOv2_reshaped/",
-        "videoswintransformer": "/home/tim/Work/quantum/data/blemore/encoded_videos/VideoSwinTransformer/",
-        "videomae": "/home/tim/Work/quantum/data/blemore/encoded_videos/VideoMAEv2_reshaped/",
+        "openface": os.path.join(data_folder, "encoded_videos/dynamic_data/openface_npy/"),
+        "imagebind": os.path.join(data_folder, "encoded_videos/dynamic_data/ImageBind/"),
+        "clip": os.path.join(data_folder, "encoded_videos/dynamic_data/CLIP_npy/"),
+        "dinov2": os.path.join(data_folder, "encoded_videos/dynamic_data/DINOv2_reshaped/"),
+        "videoswintransformer": os.path.join(data_folder, "encoded_videos/dynamic_data/VideoSwinTransformer/"),
+        "videomae": os.path.join(data_folder, "encoded_videos/dynamic_data/VideoMAEv2_reshaped/"),
     }
 
+
     encoding_paths_2d = {
-        "openface": "/home/tim/Work/quantum/data/blemore/encoded_videos/static_data/openface_static_features.npz",
-        "imagebind": "/home/tim/Work/quantum/data/blemore/encoded_videos/static_data/imagebind_static_features.npz",
-        "clip": "/home/tim/Work/quantum/data/blemore/encoded_videos/static_data/clip_static_features.npz",
-        "dinov2": "/home/tim/Work/quantum/data/blemore/encoded_videos/static_data/dinov2_static_features.npz",
-        "videoswintransformer": "/home/tim/Work/quantum/data/blemore/encoded_videos/static_data/videoswintransformer_static_features.npz",
-        "videomae": "/home/tim/Work/quantum/data/blemore/encoded_videos/static_data/videomae_static_features.npz",
+        "openface": os.path.join(data_folder, "encoded_videos/static_data/openface_static_features.npz"),
+        "imagebind": os.path.join(data_folder, "encoded_videos/static_data/imagebind_static_features.npz"),
+        "clip": os.path.join(data_folder, "encoded_videos/static_data/clip_static_features.npz"),
+        "dinov2": os.path.join(data_folder, "encoded_videos/static_data/dinov2_static_features.npz"),
+        "videoswintransformer": os.path.join(data_folder, "encoded_videos/static_data/videoswintransformer_static_features.npz"),
+        "videomae": os.path.join(data_folder, "encoded_videos/static_data/videomae_static_features.npz"),
     }
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -70,7 +79,7 @@ def main():
 
     encoders = ["openface", "imagebind", "clip", "dinov2", "videoswintransformer", "videomae"]
     # models = ["rnn", "linear"]
-    models = ["linear"]
+    models = ["rnn"]
     folds = [0, 1, 2, 3, 4]
 
     summary_rows = []
