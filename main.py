@@ -3,31 +3,33 @@ import os
 
 import numpy as np
 import pandas as pd
+from sklearn.preprocessing import StandardScaler
 from torch.utils.data import DataLoader
 import torch
 
 from config import ROOT_DIR, LABEL_TO_INDEX
+from datasets.d2_dataset import D2Dataset
 from datasets.d3_dataset import D3Dataset
-from model.models import MultiLabelRNN
+from model.models import MultiLabelRNN, MultiLabelLinearNN
 from post_processing import grid_search_thresholds
 
 from trainer import Trainer
 import matplotlib.pyplot as plt
 
-from utils.standardization import compute_train_stats
+from utils.standardization import create_transform
+
+# from utils.standardization import compute_train_stats
 
 hparams = {
     "batch_size": 32,
     "max_seq_len": None,  # Set to None for no padding/truncation
     "learning_rate": 0.0005,
-    "num_epochs": 100,
+    "num_epochs": 40,
     "weight_decay": 1e-4,
     # "dropout": 0.5,
     # "hidden_dim": 128,
     # "num_layers": 2,
 }
-
-
 
 def filter_basic_samples(filenames, labels, mix_flags):
     mask = np.array(mix_flags) == 0
@@ -57,35 +59,87 @@ def create_labels(records):
     return labels
 
 
-def prepare_split(df, labels, fold_id, encoding_folder, only_basic=False):
+def extract_files_and_labels(df, labels, mask, only_basic=False):
+    files = df.loc[mask, "filename"].tolist()
+    subset_labels = labels[mask.to_numpy()]
+    mix = df.loc[mask, "mix"].tolist()
+
+    if only_basic:
+        files, subset_labels = filter_basic_samples(files, subset_labels, mix)
+
+    return files, subset_labels
+
+
+def get_split_files_and_labels(df, labels, fold_id, only_basic=False):
     train_mask = df["fold"] != fold_id
     val_mask = df["fold"] == fold_id
 
-    def extract_subset(mask):
-        files = df.loc[mask, "filename"].tolist()
-        subset_labels = labels[mask.to_numpy()]
-        mix = df.loc[mask, "mix"].tolist()
-        if only_basic:
-            files, subset_labels = filter_basic_samples(files, subset_labels, mix)
-        return files, subset_labels
+    train_files, train_labels = extract_files_and_labels(df, labels, train_mask, only_basic)
+    val_files, val_labels = extract_files_and_labels(df, labels, val_mask, only_basic)
 
-    train_files, train_labels = extract_subset(train_mask)
-    val_files, val_labels = extract_subset(val_mask)
+    return (train_files, train_labels), (val_files, val_labels)
 
-    # mean, std = compute_train_stats(train_files, encoding_folder)
 
-    mean=None
-    std=None
+def prepare_split_3d(df, labels, fold_id, encoding_folder, only_basic=False):
+    (train_files, train_labels), (val_files, val_labels) = get_split_files_and_labels(
+        df=df,
+        labels=labels,
+        fold_id=fold_id,
+        only_basic=only_basic
+    )
+    scaler = create_transform(train_files, encoding_folder)
+    train_dataset = D3Dataset(filenames=train_files, labels=train_labels, encoding_dir=encoding_folder, scaler=scaler)
+    val_dataset = D3Dataset(filenames=val_files, labels=val_labels, encoding_dir=encoding_folder, scaler=scaler)
+    return train_dataset, val_dataset
 
-    train_dataset = D3Dataset(filenames=train_files, labels=train_labels, encoding_dir=encoding_folder, mean=mean, std=std)
-    val_dataset = D3Dataset(filenames=val_files, labels=val_labels, encoding_dir=encoding_folder, mean=mean, std=std)
+
+def prepare_split_2d(df, labels, fold_id, filepath, only_basic=False):
+    # Load full feature data and filenames
+    data = np.load(filepath)
+    X = data["X"]
+
+    # scaler = StandardScaler()
+    # X = scaler.fit_transform(X)
+
+    all_filenames = data["filenames"]
+
+    # Get train/val filename lists and corresponding labels
+    (train_files, train_labels), (val_files, val_labels) = get_split_files_and_labels(
+        df=df,
+        labels=labels,
+        fold_id=fold_id,
+        only_basic=only_basic
+    )
+
+    # Map filenames to indices in the X matrix
+    name_to_idx = {name: i for i, name in enumerate(all_filenames)}
+    train_idx = [name_to_idx[f] for f in train_files]
+    val_idx = [name_to_idx[f] for f in val_files]
+
+    # Subset data
+    X_train = X[train_idx]
+    X_val = X[val_idx]
+    filenames_train = [all_filenames[i] for i in train_idx]
+    filenames_val = [all_filenames[i] for i in val_idx]
+
+    # Fit scaler on training data
+    scaler = StandardScaler()
+    scaler.fit(X_train)
+    # Transform training and validation data
+    X_train = scaler.transform(X_train)
+    X_val = scaler.transform(X_val)
+
+    # Create datasets
+    train_dataset = D2Dataset(X=X_train, labels=train_labels, filenames=filenames_train)
+    val_dataset = D2Dataset(X=X_val, labels=val_labels, filenames=filenames_val)
 
     return train_dataset, val_dataset
 
 
+
 def main():
     argparser = argparse.ArgumentParser()
-    encoder = argparser.add_argument("--encoder", type=str, default="imagebind", help="Encoder to use")
+    encoder = argparser.add_argument("--encoder", type=str, default="clip", help="Encoder to use")
     only_basic = argparser.add_argument("--only_basic", action="store_true", help="Use only basic emotion samples")
     model = argparser.add_argument("--model", type=str, default="", help="Path to the model checkpoint")
 
@@ -98,16 +152,27 @@ def main():
     train_metadata = "/home/tim/Work/quantum/data/blemore/train_metadata.csv"
     test_metadata = "/home/tim/Work/quantum/data/blemore/test_metadata.csv"
 
-    encoding_paths = {
+    encoding_paths_3d = {
         "openface": "/home/tim/Work/quantum/data/blemore/encoded_videos/openface_npy/",
         "imagebind": "/home/tim/Work/quantum/data/blemore/encoded_videos/ImageBind/",
         "clip": "/home/tim/Work/quantum/data/blemore/encoded_videos/CLIP_npy/",
-        "dinov2": "/home/tim/Work/quantum/data/blemore/encoded_videos/DINOv2/",
+        "dinov2": "/home/tim/Work/quantum/data/blemore/encoded_videos/DINOv2_reshaped/",
         "videoswintransformer": "/home/tim/Work/quantum/data/blemore/encoded_videos/VideoSwinTransformer/",
+        "videomae": "/home/tim/Work/quantum/data/blemore/encoded_videos/VideoMAEv2_reshaped/",
     }
 
+    encoding_paths_2d = {
+        "openface": "/home/tim/Work/quantum/data/blemore/encoded_videos/static_data/openface_static_features.npz",
+        "imagebind": "/home/tim/Work/quantum/data/blemore/encoded_videos/ImageBind/",
+        "clip": "/home/tim/Work/quantum/data/blemore/encoded_videos/static_data/clip_static_features.npz",
+        "dinov2": "/home/tim/Work/quantum/data/blemore/encoded_videos/DINOv2_reshaped/",
+        "videoswintransformer": "/home/tim/Work/quantum/data/blemore/encoded_videos/VideoSwinTransformer/",
+        "videomae": "/home/tim/Work/quantum/data/blemore/encoded_videos/VideoMAEv2_reshaped/",
+    }
+
+
     # if args.encoder == "openface":
-    encoding_folder = encoding_paths[args.encoder]
+    encoding_folder = encoding_paths_2d[args.encoder]
 
     print(f"Using encoder: {args.encoder}")
     print(f"Encoding folder: {encoding_folder}")
@@ -120,7 +185,8 @@ def main():
 
     folds = [0, 1, 2, 3, 4]
     for fold_id in folds:
-        train_dataset, val_dataset = prepare_split(train_df, train_labels, fold_id, encoding_folder, args.only_basic)
+        # train_dataset, val_dataset = prepare_split_3d(train_df, train_labels, fold_id, encoding_folder, args.only_basic)
+        train_dataset, val_dataset = prepare_split_2d(train_df, train_labels, fold_id, encoding_folder, args.only_basic)
 
         print(f"Fold {fold_id}:")
         print(f"Train dataset size: {len(train_dataset)}")
@@ -132,7 +198,8 @@ def main():
         train_loader = DataLoader(train_dataset, batch_size=hparams["batch_size"], shuffle=True)
         val_loader = DataLoader(val_dataset, batch_size=hparams["batch_size"], shuffle=False)
 
-        model = MultiLabelRNN(input_dim=train_dataset.input_dim, output_dim=train_dataset.output_dim)
+        # model = MultiLabelRNN(input_dim=train_dataset.input_dim, output_dim=train_dataset.output_dim)
+        model = MultiLabelLinearNN(input_dim=train_dataset.input_dim, output_dim=train_dataset.output_dim)
 
         if args.model != '':
             model.load_state_dict(torch.load(args.model))
@@ -183,6 +250,8 @@ def main():
 
         plt.tight_layout()
         plt.show()
+
+        break
 
 
 

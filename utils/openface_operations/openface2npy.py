@@ -23,21 +23,20 @@ def convert_openface_to_npy(raw_openface_dir, save_dir,
         filename = Path(path).stem
         df = pd.read_csv(path)
 
-        if df.empty:
-            continue
-
         sr = get_success_ratio(df)
         cr = get_ok_confidence_ratio(df, confidence_threshold)
 
-        if sr < good_frames_ratio_threshold or cr < good_frames_ratio_threshold:
-            print(f"Throwing away {filename}")
-            continue
-
-        if sr < 1 or cr < 1:
+        if good_frames_ratio_threshold <= sr < 1 or good_frames_ratio_threshold <= cr < 1:
             print(f"Interpolating {filename}")
+            print(f"Success ratio: {sr:.2f}, Confidence ratio: {cr:.2f}")
             df = interpolate_openface(df, confidence_threshold)
 
-        features = df[feature_columns].to_numpy().astype(np.float32)
+        if df.empty:
+            num_frames = 1  # default to 1 timestep, or estimate from metadata if needed
+            features = np.zeros((num_frames, len(feature_columns)), dtype=np.float32)
+        else:
+            features = df[feature_columns].to_numpy().astype(np.float32)
+
         out_path = os.path.join(save_dir, f"{filename}.npy")
         np.save(out_path, features)
         valid_filenames.append(filename)

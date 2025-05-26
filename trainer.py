@@ -35,14 +35,20 @@ class Trainer(object):
         return avg_loss
 
     def validate(self):
+
+        print("\nValidating model...")
+
         self.model.eval()
         total_loss = 0
         all_preds = []
 
         with torch.no_grad():
             for data, target in self.valid_data_loader:
+
                 data, target = data.to(self.device), target.to(self.device)
+
                 output, loss = self.model(data, target)
+
                 total_loss += loss.item()
 
                 all_preds.append(output.cpu().numpy())
