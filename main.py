@@ -34,14 +34,15 @@ hparams = {
     "batch_size": 32,
     "max_seq_len": None,  # Set to None for no padding/truncation
     "learning_rate": 0.0005,
-    "num_epochs": 10,
-    "weight_decay": 1e-4,
+    "num_epochs": 200,
+    "weight_decay": 1e-3,
 }
 
 
 def main():
 
-    data_folder = "/home/tim/Work/quantum/data/blemore/"
+    # data_folder = "/home/tim/Work/quantum/data/blemore/"
+    data_folder = "/home/user/Work/quantum/data/blemore/"
 
     # paths
     train_metadata = os.path.join(data_folder, "train_metadata.csv")
@@ -78,8 +79,7 @@ def main():
     train_labels = create_labels(train_records)
 
     encoders = ["openface", "imagebind", "clip", "dinov2", "videoswintransformer", "videomae"]
-    # models = ["rnn", "linear"]
-    models = ["rnn"]
+    models = ["rnn", "linear"]
     folds = [0, 1, 2, 3, 4]
 
     summary_rows = []

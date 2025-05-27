@@ -40,6 +40,9 @@ def prepare_split_3d(df, labels, fold_id, encoding_folder, only_basic=False):
         only_basic=only_basic
     )
     scaler = create_transform(train_files, encoding_folder)
+
+    # scaler = None
+
     train_dataset = D3Dataset(filenames=train_files, labels=train_labels, encoding_dir=encoding_folder, scaler=scaler)
     val_dataset = D3Dataset(filenames=val_files, labels=val_labels, encoding_dir=encoding_folder, scaler=scaler)
     return train_dataset, val_dataset

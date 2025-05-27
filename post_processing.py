@@ -80,7 +80,7 @@ def probs2dict(y_pred,
 
 
 
-def grid_search_thresholds(filenames, preds, presence_weight=0.5, debug_plots=True):
+def grid_search_thresholds(filenames, preds, presence_weight=0.5, debug_plots=False):
 
     preds = get_top_2_predictions(preds)
     grid = []
@@ -119,7 +119,9 @@ def grid_search_thresholds(filenames, preds, presence_weight=0.5, debug_plots=Tr
 
     # After best_alpha, best_beta have been found
     final_preds = probs2dict(preds, filenames, best_alpha, best_beta)
-    summarize_prediction_distribution(final_preds)
+
+    if debug_plots:
+        summarize_prediction_distribution(final_preds)
 
     return best_alpha, best_beta, best_acc_presence, best_acc_salience
 
