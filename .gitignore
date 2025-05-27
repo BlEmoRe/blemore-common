@@ -9,6 +9,8 @@ sandbox/torch2npy.py
 sandbox/fiddle.py
 sandbox/fiddle2.py
 
+!validation_summary.csv
+
 # Python general
 __pycache__/
 *.py[cod]
