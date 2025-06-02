@@ -7,11 +7,11 @@ from model.models import MultiLabelRNN, MultiLabelLinearNN
 from trainer import Trainer
 
 from utils.create_soft_labels import create_labels
-from utils.set_splitting import prepare_split_3d, prepare_split_2d
+from utils.set_splitting import prepare_split_3d, prepare_split_2d, prepare_split_subsampled
 import os
 
 hparams = {
-    "batch_size": 32,
+    "batch_size": 512,
     "max_seq_len": None,  # Set to None for no padding/truncation
     "learning_rate": 0.0005,
     "num_epochs": 200,
@@ -20,15 +20,15 @@ hparams = {
 
 
 def main():
-    # data_folder = "/home/tim/Work/quantum/data/blemore/"
-    data_folder = "/home/user/Work/quantum/data/blemore/"
+    data_folder = "/home/tim/Work/quantum/data/blemore/"
+    # data_folder = "/home/user/Work/quantum/data/blemore/"
 
     # paths
     train_metadata = os.path.join(data_folder, "train_metadata.csv")
     test_metadata = os.path.join(data_folder, "test_metadata.csv")
 
     encoding_paths_3d = {
-        "dinov2": os.path.join(data_folder, "encoded_videos/dynamic_data/dinov2_first_component/"),
+        "dinov2": os.path.join(data_folder, "encoded_videos/dynamic_data/DINOv2_first_component/"),
         "videoswintransformer": os.path.join(data_folder, "encoded_videos/dynamic_data/VideoSwinTransformer/"),
         "videomae": os.path.join(data_folder, "encoded_videos/dynamic_data/VideoMAEv2_reshaped/"),
     }
@@ -39,7 +39,7 @@ def main():
     train_records = train_df.to_dict(orient="records")
     train_labels = create_labels(train_records)
 
-    encoders = ["dinov2", "videoswintransformer", "videomae"]
+    encoders = ["dinov2", "videomae", "videoswintransformer"]
     folds = [0, 1, 2, 3, 4]
 
     summary_rows = []
@@ -51,7 +51,13 @@ def main():
             # Pick encoding path
             encoding_folder = encoding_paths_3d[encoder]
 
-            train_dataset, val_dataset = prepare_split_2d(train_df, train_labels, fold_id, encoding_folder)
+            train_dataset, val_dataset = prepare_split_subsampled(train_df, train_labels, fold_id, encoding_folder)
+
+            print(f"Train dataset size: {len(train_dataset)}")
+            print(f"Validation dataset size: {len(val_dataset)}")
+
+            print(f"Input dimension: {train_dataset.input_dim}")
+            print(f"Output dimension: {train_dataset.output_dim}")
 
             train_loader = DataLoader(train_dataset, batch_size=hparams["batch_size"], shuffle=True)
             val_loader = DataLoader(val_dataset, batch_size=hparams["batch_size"], shuffle=False)
@@ -66,7 +72,7 @@ def main():
 
             trainer = Trainer(model=model, optimizer=optimizer,
                               data_loader=train_loader, epochs=hparams["num_epochs"],
-                              valid_data_loader=val_loader)
+                              valid_data_loader=val_loader, subsample_aggregation=True)
 
             log_dir = f"runs/{encoder}_fold{fold_id}"
             writer = SummaryWriter(log_dir=log_dir)

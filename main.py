@@ -41,8 +41,8 @@ hparams = {
 
 def main():
 
-    # data_folder = "/home/tim/Work/quantum/data/blemore/"
-    data_folder = "/home/user/Work/quantum/data/blemore/"
+    data_folder = "/home/tim/Work/quantum/data/blemore/"
+    # data_folder = "/home/user/Work/quantum/data/blemore/"
 
     # paths
     train_metadata = os.path.join(data_folder, "train_metadata.csv")
@@ -78,8 +78,8 @@ def main():
     train_records = train_df.to_dict(orient="records")
     train_labels = create_labels(train_records)
 
-    encoders = ["openface", "imagebind", "clip", "dinov2", "videoswintransformer", "videomae"]
-    models = ["rnn", "linear"]
+    encoders = ["imagebind", "videomae", "videoswintransformer", "openface", "clip", "dinov2"]
+    models = ["linear"]
     folds = [0, 1, 2, 3, 4]
 
     summary_rows = []
@@ -109,7 +109,7 @@ def main():
                 else:
                     model = MultiLabelLinearNN(input_dim=train_dataset.input_dim,
                                                output_dim=train_dataset.output_dim,
-                                               activation="softmax")
+                                               activation="softmax")  # or "softmax")
 
                 optimizer = torch.optim.Adam(model.parameters(), lr=hparams["learning_rate"],
                                              weight_decay=hparams["weight_decay"])
@@ -117,7 +117,8 @@ def main():
 
                 trainer = Trainer(model=model, optimizer=optimizer,
                                   data_loader=train_loader, epochs=hparams["num_epochs"],
-                                  valid_data_loader=val_loader)
+                                  valid_data_loader=val_loader,
+                                  subsample_aggregation=False)
 
                 log_dir = f"runs/{encoder}_{model_type}_fold{fold_id}"
                 writer = SummaryWriter(log_dir=log_dir)
