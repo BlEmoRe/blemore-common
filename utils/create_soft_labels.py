@@ -12,8 +12,8 @@ def create_labels(records):
         s2 = record["emotion_2_salience"]
         mix = record["mix"]
 
-        if e1 not in LABEL_TO_INDEX:
-            continue  # skip neutral
+        # if e1 not in LABEL_TO_INDEX:
+        #     continue  # skip neutral
 
         if mix == 0:
             labels[i, LABEL_TO_INDEX[e1]] = 1

@@ -4,6 +4,13 @@ Current model with ImageBInd gives imrpovements around 150 epochs.
 
 Monitor the accuracy on validation sets over time and save the best model. 
 
+## TODO:
+
+1. Create a dataset where the features from VideoSwinTransformer, VideoMAE, and DinoV2 are loaded as subsamples,
+as well as samples. 
+2. Set up training logic that trains on subsamples, but validates on the full sample.
+3. Set up grid search for size of hidden layers on ImageBind, CLIP, and openface aggregate measures. 
+
 ## Tools
 
 ### Accuracy metrics

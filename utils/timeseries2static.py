@@ -47,12 +47,12 @@ def main():
     os.makedirs(base_static_dir, exist_ok=True)
 
     encoding_paths = {
-        "openface": "/home/tim/Work/quantum/data/blemore/encoded_videos/openface_npy/",
-        "imagebind": "/home/tim/Work/quantum/data/blemore/encoded_videos/ImageBind/",
-        "clip": "/home/tim/Work/quantum/data/blemore/encoded_videos/CLIP_npy/",
-        "dinov2": "/home/tim/Work/quantum/data/blemore/encoded_videos/DINOv2_reshaped/",
-        "videoswintransformer": "/home/tim/Work/quantum/data/blemore/encoded_videos/VideoSwinTransformer/",
-        "videomae": "/home/tim/Work/quantum/data/blemore/encoded_videos/VideoMAEv2_reshaped/",
+        # "openface": "/home/tim/Work/quantum/data/blemore/encoded_videos/openface_npy/",
+        # "imagebind": "/home/tim/Work/quantum/data/blemore/encoded_videos/ImageBind/",
+        # "clip": "/home/tim/Work/quantum/data/blemore/encoded_videos/CLIP_npy/",
+        "dinov2": "/home/tim/Work/quantum/data/blemore/encoded_videos/dynamic_data/DINOv2_first_component/",
+        # "videoswintransformer": "/home/tim/Work/quantum/data/blemore/encoded_videos/VideoSwinTransformer/",
+        # "videomae": "/home/tim/Work/quantum/data/blemore/encoded_videos/VideoMAEv2_reshaped/",
     }
 
     for encoder, path in encoding_paths.items():

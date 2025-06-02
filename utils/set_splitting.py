@@ -3,6 +3,7 @@ from sklearn.preprocessing import StandardScaler
 
 from datasets.d2_dataset import D2Dataset
 from datasets.d3_dataset import D3Dataset
+from datasets.subsample_dataset import SubsampledVideoDataset
 from utils.standardization import create_transform
 
 
@@ -87,5 +88,31 @@ def prepare_split_2d(df, labels, fold_id, filepath, only_basic=False):
     # Create datasets
     train_dataset = D2Dataset(X=X_train, labels=train_labels, filenames=filenames_train)
     val_dataset = D2Dataset(X=X_val, labels=val_labels, filenames=filenames_val)
+
+    return train_dataset, val_dataset
+
+
+def prepare_split_subsampled(df, labels, fold_id, data_dir, only_basic=False):
+    """
+    data_dir: directory containing .npy files for each video.
+    """
+    (train_videos, train_labels), (val_videos, val_labels) = get_split_files_and_labels(
+        df=df,
+        labels=labels,
+        fold_id=fold_id,
+        only_basic=only_basic
+    )
+
+    # Initialize datasets
+    train_dataset = SubsampledVideoDataset(filenames=train_videos, labels=train_labels, data_dir=data_dir)
+    val_dataset = SubsampledVideoDataset(filenames=val_videos, labels=val_labels, data_dir=data_dir)
+
+    # Standard Scaler: Fit only on train, transform both
+    scaler = StandardScaler()
+    scaler.fit(train_dataset.features)
+
+    # Apply scaler
+    train_dataset.features = scaler.transform(train_dataset.features)
+    val_dataset.features = scaler.transform(val_dataset.features)
 
     return train_dataset, val_dataset
