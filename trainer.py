@@ -56,9 +56,10 @@ class Trainer(object):
         all_preds = np.concatenate(all_preds, axis=0)
         val_filenames = self.valid_data_loader.dataset.filenames
 
-        best_alpha, best_beta, best_acc_presence, best_acc_salience = grid_search_thresholds(val_filenames, all_preds)
+        ret = grid_search_thresholds(val_filenames, all_preds)
         avg_loss = total_loss / len(self.valid_data_loader)
-        return avg_loss, best_alpha, best_beta, best_acc_presence, best_acc_salience
+        ret["val_loss"] = avg_loss
+        return ret
 
     def train(self, writer=None):
         results = []
@@ -71,32 +72,34 @@ class Trainer(object):
             if writer:
                 writer.add_scalar("Loss/train", train_loss, epoch)
 
-            # Validation every 10 epochs
-            if self.valid_data_loader and epoch % 10 == 0:
-                val_loss, best_alpha, best_beta, best_acc_presence, best_acc_salience = self.validate()
-                print(f"Epoch [{epoch + 1}/{self.epochs}], "
-                      f"Validation Loss: {val_loss:.4f}, "
-                      f"Best Alpha: {best_alpha:.4f}, "
-                      f"Best Beta: {best_beta:.4f}, "
-                      f"Best Acc Presence: {best_acc_presence:.4f}, "
-                      f"Best Acc Salience: {best_acc_salience:.4f}")
+            stats = self.validate()
+            print(f"Epoch [{epoch + 1}/{self.epochs}], "
+                  f"Validation Loss: {stats['val_loss']:.4f}, "
+                  f"Best Alpha: {stats['alpha']:.4f}, "
+                  f"Best Beta: {stats['beta']:.4f}, "
+                  f"Best Acc Presence: {stats['acc_presence']:.4f}, "
+                  f"Best Acc Salience: {stats['acc_salience']:.4f},"
+                  f"Best possible Acc Presence : {stats['presence_only']:.4f}, "
+                  f"Best possible Acc Salience : {stats['salience_only']:.4f}")
 
-                # Log validation metrics
-                if writer:
-                    writer.add_scalar("Loss/val", val_loss, epoch)
-                    writer.add_scalar("Accuracy/presence", best_acc_presence, epoch)
-                    writer.add_scalar("Accuracy/salience", best_acc_salience, epoch)
-                    writer.add_scalar("Alpha", best_alpha, epoch)
-                    writer.add_scalar("Beta", best_beta, epoch)
+            # Log validation metrics
+            if writer:
+                writer.add_scalar("Loss/val", stats['val_loss'], epoch)
+                writer.add_scalar("Accuracy/presence", stats['acc_presence'], epoch)
+                writer.add_scalar("Accuracy/salience", stats['acc_salience'], epoch)
+                writer.add_scalar("Alpha", stats['alpha'], epoch)
+                writer.add_scalar("Beta", stats['beta'], epoch)
+                writer.add_scalar("Best possible Accuracy/presence", stats['presence_only'], epoch)
+                writer.add_scalar("Best possible Accuracy/salience", stats['salience_only'], epoch)
 
             results.append({
                 "epoch": epoch + 1,
                 "train_loss": train_loss,
-                "val_loss": val_loss if self.valid_data_loader else None,
-                "best_alpha": best_alpha if self.valid_data_loader else None,
-                "best_beta": best_beta if self.valid_data_loader else None,
-                "best_acc_presence": best_acc_presence if self.valid_data_loader else None,
-                "best_acc_salience": best_acc_salience if self.valid_data_loader else None
+                "val_loss": stats['val_loss'] if self.valid_data_loader else None,
+                "best_alpha": stats['alpha'] if self.valid_data_loader else None,
+                "best_beta": stats['beta'] if self.valid_data_loader else None,
+                "best_acc_presence": stats['acc_presence'] if self.valid_data_loader else None,
+                "best_acc_salience": stats['acc_salience'] if self.valid_data_loader else None
             })
 
         return results

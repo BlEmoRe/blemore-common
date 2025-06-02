@@ -33,7 +33,7 @@ import os
 hparams = {
     "batch_size": 32,
     "max_seq_len": None,  # Set to None for no padding/truncation
-    "learning_rate": 0.0005,
+    "learning_rate": 0.0001,
     "num_epochs": 200,
     "weight_decay": 1e-3,
 }
@@ -78,8 +78,8 @@ def main():
     train_records = train_df.to_dict(orient="records")
     train_labels = create_labels(train_records)
 
-    encoders = ["openface", "imagebind", "clip", "dinov2", "videoswintransformer", "videomae"]
-    models = ["rnn", "linear"]
+    encoders = ["imagebind", "clip", "videoswintransformer", "videomae", "openface", "dinov2"]
+    models = ["linear", "rnn"]
     folds = [0, 1, 2, 3, 4]
 
     summary_rows = []
@@ -109,7 +109,7 @@ def main():
                 else:
                     model = MultiLabelLinearNN(input_dim=train_dataset.input_dim,
                                                output_dim=train_dataset.output_dim,
-                                               activation="softmax")
+                                               activation="softmax")  # or "sparsemax", "softmax")
 
                 optimizer = torch.optim.Adam(model.parameters(), lr=hparams["learning_rate"],
                                              weight_decay=hparams["weight_decay"])

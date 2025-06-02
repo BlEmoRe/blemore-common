@@ -77,12 +77,12 @@ def prepare_split_2d(df, labels, fold_id, filepath, only_basic=False):
     filenames_train = [all_filenames[i] for i in train_idx]
     filenames_val = [all_filenames[i] for i in val_idx]
 
-    # Fit scaler on training data
-    scaler = StandardScaler()
-    scaler.fit(X_train)
-    # Transform training and validation data
-    X_train = scaler.transform(X_train)
-    X_val = scaler.transform(X_val)
+    # # Fit scaler on training data
+    # scaler = StandardScaler()
+    # scaler.fit(X_train)
+    # # Transform training and validation data
+    # X_train = scaler.transform(X_train)
+    # X_val = scaler.transform(X_val)
 
     # Create datasets
     train_dataset = D2Dataset(X=X_train, labels=train_labels, filenames=filenames_train)
