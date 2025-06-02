@@ -6,7 +6,7 @@ from entmax import sparsemax, entmax15
 
 
 class MultiLabelLinearNN(nn.Module):
-    def __init__(self, input_dim, output_dim, activation="entmax15", dropout_rate=0.2):
+    def __init__(self, input_dim, output_dim, activation="softmax", dropout_rate=0.2):
         super(MultiLabelLinearNN, self).__init__()
         self.activation_type = activation
 
@@ -38,6 +38,56 @@ class MultiLabelLinearNN(nn.Module):
             probs = F.softmax(logits, dim=1)
         else:
             raise ValueError(f"Unknown activation type: {self.activation_type}")
+
+        loss = None
+        if targets is not None:
+            # KL divergence expects log probs
+            log_probs = probs.clamp(min=1e-8).log()
+            valid = targets.sum(dim=1) > 0  # skip all-zero (neutral) targets
+            if valid.any():
+                loss = F.kl_div(log_probs[valid], targets[valid], reduction="batchmean")
+
+        return probs, loss
+
+
+class MultiLabelLinearNNShallow(nn.Module):
+    def __init__(self, input_dim, output_dim):
+        super(MultiLabelLinearNNShallow, self).__init__()
+
+        self.fc = nn.Sequential(
+            nn.Linear(input_dim, 256),
+            nn.ReLU(),
+            nn.Linear(256, output_dim),
+        )
+
+    def forward(self, x, targets=None):
+        logits = self.fc(x)
+
+        probs = F.softmax(logits, dim=1)
+
+        loss = None
+        if targets is not None:
+            # KL divergence expects log probs
+            log_probs = probs.clamp(min=1e-8).log()
+            valid = targets.sum(dim=1) > 0  # skip all-zero (neutral) targets
+            if valid.any():
+                loss = F.kl_div(log_probs[valid], targets[valid], reduction="batchmean")
+
+        return probs, loss
+
+
+class MultiLabelLinearNNSuperShallow(nn.Module):
+    def __init__(self, input_dim, output_dim):
+        super(MultiLabelLinearNNSuperShallow, self).__init__()
+
+        self.fc = nn.Sequential(
+            nn.Linear(input_dim, output_dim)
+        )
+
+    def forward(self, x, targets=None):
+        logits = self.fc(x)
+
+        probs = F.softmax(logits, dim=1)
 
         loss = None
         if targets is not None:

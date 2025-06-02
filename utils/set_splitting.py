@@ -103,7 +103,16 @@ def prepare_split_subsampled(df, labels, fold_id, data_dir, only_basic=False):
         only_basic=only_basic
     )
 
+    # Initialize datasets
     train_dataset = SubsampledVideoDataset(filenames=train_videos, labels=train_labels, data_dir=data_dir)
     val_dataset = SubsampledVideoDataset(filenames=val_videos, labels=val_labels, data_dir=data_dir)
+
+    # Standard Scaler: Fit only on train, transform both
+    scaler = StandardScaler()
+    scaler.fit(train_dataset.features)
+
+    # Apply scaler
+    train_dataset.features = scaler.transform(train_dataset.features)
+    val_dataset.features = scaler.transform(val_dataset.features)
 
     return train_dataset, val_dataset

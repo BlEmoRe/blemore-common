@@ -39,7 +39,7 @@ def main():
     train_records = train_df.to_dict(orient="records")
     train_labels = create_labels(train_records)
 
-    encoders = ["dinov2", "videomae", "videoswintransformer"]
+    encoders = ["videomae", "dinov2", "videoswintransformer"]
     folds = [0, 1, 2, 3, 4]
 
     summary_rows = []
