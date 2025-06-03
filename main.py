@@ -11,7 +11,8 @@ from post_processing import get_top_2_predictions, probs2dict
 from trainer import Trainer
 from utils.create_soft_labels import create_labels
 from utils.generic_accuracy.accuracy_funcs import acc_presence_total, acc_salience_total
-from utils.set_splitting import prepare_split_2d, get_validation_split
+from utils.set_splitting import prepare_split_2d, get_validation_split, prepare_split_subsampled
+from utils.subsample_utils import aggregate_subsamples
 
 # --- Global Settings ---
 SEED = 42
@@ -43,7 +44,7 @@ def select_model(model_type, input_dim, output_dim):
         raise ValueError(f"Unknown model type: {model_type}")
 
 
-def train_one_fold(train_dataset, val_dataset, model_type, log_dir):
+def train_one_fold(train_dataset, val_dataset, model_type, log_dir, subsample_aggregation=False):
     train_loader = DataLoader(train_dataset, batch_size=hparams["batch_size"], shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=hparams["batch_size"], shuffle=False)
 
@@ -53,7 +54,7 @@ def train_one_fold(train_dataset, val_dataset, model_type, log_dir):
 
     trainer = Trainer(model=model, optimizer=optimizer,
                       data_loader=train_loader, epochs=hparams["num_epochs"],
-                      valid_data_loader=val_loader, subsample_aggregation=False)
+                      valid_data_loader=val_loader, subsample_aggregation=subsample_aggregation)
 
     writer = SummaryWriter(log_dir=log_dir)
     res = trainer.train(writer=writer)
@@ -63,7 +64,7 @@ def train_one_fold(train_dataset, val_dataset, model_type, log_dir):
     return best_epoch
 
 
-def train_and_test(train_dataset, test_dataset, model_type, alpha, beta):
+def train_and_test(train_dataset, test_dataset, model_type, alpha, beta, subsample_aggregation):
     train_loader = DataLoader(train_dataset, batch_size=hparams["batch_size"], shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=hparams["batch_size"], shuffle=False)
 
@@ -73,22 +74,29 @@ def train_and_test(train_dataset, test_dataset, model_type, alpha, beta):
 
     trainer = Trainer(model=model, optimizer=optimizer,
                       data_loader=train_loader, epochs=hparams["num_epochs"],
-                      subsample_aggregation=False)
+                      subsample_aggregation=subsample_aggregation)
 
     trainer.train()
 
     all_probs = []
+    all_logits = []
     model.eval()
     with torch.no_grad():
         for data, _ in test_loader:
             data = data.to(device)
-            probs, _, _ = model(data)
+            probs, logits, _ = model(data)
             all_probs.append(probs.cpu().numpy())
+            all_logits.append(logits.cpu().numpy())
 
     all_probs = np.concatenate(all_probs, axis=0)
-    top_2_probs = get_top_2_predictions(all_probs)
+    all_logits = np.concatenate(all_logits, axis=0)
+
     test_filenames = test_loader.dataset.filenames
 
+    if subsample_aggregation:
+        test_filenames, all_probs = aggregate_subsamples(test_filenames, all_logits)
+
+    top_2_probs = get_top_2_predictions(all_probs)
     final_preds = probs2dict(top_2_probs, test_filenames, alpha, beta)
 
     acc_presence = acc_presence_total(final_preds)
@@ -112,68 +120,90 @@ def main():
         "videomae": os.path.join(data_folder, "encoded_videos/static_data/videomae_static_features.npz"),
     }
 
+    encoding_paths_3d = {
+        "videoswintransformer": os.path.join(data_folder, "encoded_videos/dynamic_data/VideoSwinTransformer/"),
+        "videomae": os.path.join(data_folder, "encoded_videos/dynamic_data/VideoMAEv2_reshaped/"),
+    }
+
+
     train_df = pd.read_csv(train_metadata)
     train_labels = create_labels(train_df.to_dict(orient="records"))
 
     test_df = pd.read_csv(test_metadata)
     test_labels = create_labels(test_df.to_dict(orient="records"))
 
-    encoders = ["imagebind", "videomae", "videoswintransformer", "openface", "clip"]
-    encoders = ["imagebind", "videomae", "clip"]
+    encoders_2d = ["imagebind", "videomae", "videoswintransformer", "openface", "clip"]
+    encoders_3d = ["videoswintransformer", "videomae"]
 
     model_types = ["Linear", "MLP_256", "MLP_512"]
-    model_types = ["Linear"]
 
     folds = [0, 1, 2, 3, 4]
-    folds = [0, 1]
-
 
     summary_rows = []
     test_summary_rows = []
 
-    for encoder in encoders:
-        encoding_path = encoding_paths_2d[encoder]
+    subsample_aggregation = False
 
-        for model_type in model_types:
-            fold_results = []
+    for mode in ["3d"]:
+        if mode == "2d":
+            encoders = encoders_2d
+            encoding_paths = encoding_paths_2d
+            hparams["batch_size"] = 32
+            subsample_aggregation = False
+        else:
+            encoders = encoders_3d
+            encoding_paths = encoding_paths_3d
+            hparams["batch_size"] = 512
+            subsample_aggregation = True
 
-            for fold_id in folds:
-                print(f"\nRunning encoder={encoder}, model={model_type}, fold={fold_id}")
+        for encoder in encoders:
+            encoding_path = encoding_paths[encoder]
 
-                (train_files, train_labels_fold), (val_files, val_labels) = get_validation_split(train_df, train_labels, fold_id)
-                train_dataset, val_dataset = prepare_split_2d(train_files, train_labels_fold, val_files, val_labels, encoding_path)
+            for model_type in model_types:
+                fold_results = []
 
-                log_dir = f"runs/{encoder}_{model_type}_fold{fold_id}"
-                best_epoch = train_one_fold(train_dataset, val_dataset, model_type, log_dir)
-                best_epoch.update({"encoder": encoder, "model": model_type, "fold": fold_id})
-                summary_rows.append(best_epoch)
-                fold_results.append(best_epoch)
+                for fold_id in folds:
+                    print(f"\nRunning encoder={encoder}, model={model_type}, fold={fold_id}, mode={mode}")
+                    if mode == "2d":
+                        # Prepare 2D dataset
+                        (train_files, train_labels_fold), (val_files, val_labels) = get_validation_split(train_df, train_labels, fold_id)
+                        train_dataset, val_dataset = prepare_split_2d(train_files, train_labels_fold, val_files, val_labels, encoding_path)
+                    else:
+                        train_dataset, val_dataset = prepare_split_subsampled(train_df, train_labels, fold_id, encoding_path)
 
-            # Compute average alpha and beta over folds
-            fold_df = pd.DataFrame(fold_results)
-            alpha_mean = fold_df["best_alpha"].mean()
-            beta_mean = fold_df["best_beta"].mean()
+                    log_dir = f"runs/{encoder}_{model_type}_fold{fold_id}, mode={mode}"
+                    best_epoch = train_one_fold(train_dataset, val_dataset, model_type, log_dir, subsample_aggregation)
+                    best_epoch.update({"encoder": encoder, "model": model_type, "fold": fold_id, "mode": mode})
 
-            print(f"Selected alpha: {alpha_mean:.4f}, beta: {beta_mean:.4f} for encoder={encoder}, model={model_type}")
+                    summary_rows.append(best_epoch)
+                    fold_results.append(best_epoch)
 
-            # Train on full train set and evaluate on test set
-            train_files = train_df.filename.tolist()
-            test_files = test_df.filename.tolist()
-            train_dataset, test_dataset = prepare_split_2d(train_files, train_labels, test_files, test_labels, encoding_path)
+                # Compute average alpha and beta over folds
+                fold_df = pd.DataFrame(fold_results)
+                alpha_mean = fold_df["best_alpha"].mean()
+                beta_mean = fold_df["best_beta"].mean()
 
-            acc_presence, acc_salience = train_and_test(train_dataset, test_dataset, model_type, alpha_mean, beta_mean)
+                print(f"Selected alpha: {alpha_mean:.4f}, beta: {beta_mean:.4f} for encoder={encoder}, model={model_type}, mode={mode}")
 
-            print(f"Test Accuracy Presence: {acc_presence:.4f}, Salience: {acc_salience:.4f}")
+                # Train on full train set and evaluate on test set
+                train_files = train_df.filename.tolist()
+                test_files = test_df.filename.tolist()
+                train_dataset, test_dataset = prepare_split_2d(train_files, train_labels, test_files, test_labels, encoding_path)
 
-            # Save test results
-            test_summary_rows.append({
-                "encoder": encoder,
-                "model": model_type,
-                "alpha": alpha_mean,
-                "beta": beta_mean,
-                "test_acc_presence": acc_presence,
-                "test_acc_salience": acc_salience,
-            })
+                acc_presence, acc_salience = train_and_test(train_dataset, test_dataset, model_type, alpha_mean, beta_mean)
+
+                print(f"Test Accuracy Presence: {acc_presence:.4f}, Salience: {acc_salience:.4f}")
+
+                # Save test results
+                test_summary_rows.append({
+                    "mode": mode,
+                    "encoder": encoder,
+                    "model": model_type,
+                    "alpha": alpha_mean,
+                    "beta": beta_mean,
+                    "test_acc_presence": acc_presence,
+                    "test_acc_salience": acc_salience,
+                })
 
     # Save validation results
     summary_df = pd.DataFrame(summary_rows)

@@ -12,7 +12,7 @@ import os
 
 hparams = {
     "batch_size": 512,
-    "learning_rate": 5e-6,
+    "learning_rate": 5e-5,
     "num_epochs": 200,
     "weight_decay": 1e-3,
 }
@@ -62,8 +62,8 @@ def main():
 
             model = ConfigurableLinearNN(input_dim=train_dataset.input_dim,
                                          output_dim=train_dataset.output_dim,
-                                         n_layers=1,
-                                         hidden_dim=1024,
+                                         n_layers=0,
+
                                          )
 
             optimizer = torch.optim.Adam(model.parameters(), lr=hparams["learning_rate"],
