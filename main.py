@@ -14,7 +14,7 @@ import os
 hparams = {
     "batch_size": 32,
     "max_seq_len": None,  # Set to None for no padding/truncation
-    "learning_rate": 0.0005,
+    "learning_rate": 0.000005,
     "num_epochs": 100,
     "weight_decay": 1e-3,
 }
@@ -44,7 +44,7 @@ def main():
     train_labels = create_labels(train_records)
 
     encoders = ["imagebind", "videomae", "videoswintransformer", "openface", "clip"]
-    models = ["shallow", "very_shallow", "deep"]
+    models = ["deep", "very_shallow", "shallow"]
     folds = [0, 1, 2, 3, 4]
 
     summary_rows = []

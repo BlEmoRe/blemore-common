@@ -19,4 +19,6 @@ LABEL_TO_INDEX = {
     "neu": 5  # Neutral is included in the label set
 }
 
+NEUTRAL_INDEX = LABEL_TO_INDEX['neu']
+
 INDEX_TO_LABEL = {v: k for k, v in LABEL_TO_INDEX.items()}

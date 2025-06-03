@@ -3,7 +3,7 @@ from collections import Counter
 
 import torch
 
-from config import INDEX_TO_LABEL
+from config import INDEX_TO_LABEL, NEUTRAL_INDEX
 from utils.generic_accuracy.accuracy_funcs import acc_presence_total, acc_salience_total
 from visualizations import plot_grid_heatmap, summarize_prediction_distribution
 
@@ -44,20 +44,31 @@ def probs2dict(y_pred,
         Dict[str, List[Dict[str, float]]]: Formatted predictions per file
     """
     y_pred = np.copy(y_pred)
-    y_pred[y_pred < presence_threshold] = 0  # mask low confidence
-
     result = {}
 
     for fname, vec in zip(filenames, y_pred):
-        nonzero = np.where(vec > 0)[0]
+        pred_top_index = np.argmax(vec)  # Get the index of the highest probability
 
-        if len(nonzero) == 0:
-            preds = [{"emotion": "neu", "salience": 100.0}]
+        if vec[pred_top_index] < presence_threshold:
+            preds = [{"emotion": INDEX_TO_LABEL[pred_top_index], "salience": 100.0}]
             result[fname] = preds
             continue
 
+        vec[vec < presence_threshold] = 0  # mask low confidence
+        nonzero = np.where(vec > 0)[0]
+
         if len(nonzero) == 1:
             preds = [{"emotion": INDEX_TO_LABEL[nonzero[0]], "salience": 100.0}]
+            result[fname] = preds
+            continue
+
+        if NEUTRAL_INDEX in nonzero:
+            if vec[nonzero[0]] >= vec[NEUTRAL_INDEX]:
+                # If neutral is present but has lower salience than the first emotion
+                preds = [{"emotion": INDEX_TO_LABEL[nonzero[0]], "salience": 100.0}]
+            else:
+                # If neutral is present and has higher salience than the first emotion
+                preds = [{"emotion": INDEX_TO_LABEL[NEUTRAL_INDEX], "salience": 100.0}]
             result[fname] = preds
             continue
 
@@ -130,11 +141,11 @@ def grid_search_thresholds(filenames, preds, presence_weight=0.5, debug_plots=Fa
 def main():
 
     # Example usage
-    y_pred = np.array([[0.8, 0.1, 0.05, 0.03, 0.02],
-                       [0.2, 0.7, 0.05, 0.03, 0.02],
-                       [0.1, 0.1, 0.7, 0.05, 0.05],
-                      [0.0, 0.0, 0.0, 0.0, 0.0],
-                       [0.9, 0.0, 0.0, 0.0, 0.0],
+    y_pred = np.array([[0.7, 0.1, 0.05, 0.03, 0.02, 0.1],
+                       [0.2, 0.6, 0.05, 0.03, 0.02, 0.1],
+                       [0.1, 0.1, 0.6, 0.05, 0.05, 0.1],
+                      [0.0, 0.0, 0.0, 0.0, 0.4, 0.6],
+                       [0.9, 0.0, 0.0, 0.0, 0.0, 0.1],
                        ])  # Example predictions
 
     y_pred = get_top_2_predictions(y_pred)
