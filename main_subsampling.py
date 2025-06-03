@@ -7,12 +7,11 @@ from model.models import ConfigurableLinearNN
 from trainer import Trainer
 
 from utils.create_soft_labels import create_labels
-from utils.set_splitting import prepare_split_3d, prepare_split_2d, prepare_split_subsampled
+from utils.set_splitting import prepare_split_2d, prepare_split_subsampled
 import os
 
 hparams = {
     "batch_size": 512,
-    "max_seq_len": None,  # Set to None for no padding/truncation
     "learning_rate": 5e-6,
     "num_epochs": 200,
     "weight_decay": 1e-3,
@@ -28,7 +27,6 @@ def main():
     test_metadata = os.path.join(data_folder, "test_metadata.csv")
 
     encoding_paths_3d = {
-        "dinov2": os.path.join(data_folder, "encoded_videos/dynamic_data/DINOv2_first_component/"),
         "videoswintransformer": os.path.join(data_folder, "encoded_videos/dynamic_data/VideoSwinTransformer/"),
         "videomae": os.path.join(data_folder, "encoded_videos/dynamic_data/VideoMAEv2_reshaped/"),
     }
