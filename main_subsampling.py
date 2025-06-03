@@ -2,7 +2,7 @@ import pandas as pd
 from torch.utils.data import DataLoader
 import torch
 from torch.utils.tensorboard import SummaryWriter
-from model.models import MultiLabelRNN, MultiLabelLinearNN
+from model.models import ConfigurableLinearNN
 
 from trainer import Trainer
 
@@ -13,7 +13,7 @@ import os
 hparams = {
     "batch_size": 512,
     "max_seq_len": None,  # Set to None for no padding/truncation
-    "learning_rate": 0.0005,
+    "learning_rate": 5e-6,
     "num_epochs": 200,
     "weight_decay": 1e-3,
 }
@@ -39,7 +39,7 @@ def main():
     train_records = train_df.to_dict(orient="records")
     train_labels = create_labels(train_records)
 
-    encoders = ["videomae", "dinov2", "videoswintransformer"]
+    encoders = ["videomae", "videoswintransformer"]
     folds = [0, 1, 2, 3, 4]
 
     summary_rows = []
@@ -62,9 +62,11 @@ def main():
             train_loader = DataLoader(train_dataset, batch_size=hparams["batch_size"], shuffle=True)
             val_loader = DataLoader(val_dataset, batch_size=hparams["batch_size"], shuffle=False)
 
-            model = MultiLabelLinearNN(input_dim=train_dataset.input_dim,
-                                           output_dim=train_dataset.output_dim,
-                                           activation="softmax")
+            model = ConfigurableLinearNN(input_dim=train_dataset.input_dim,
+                                         output_dim=train_dataset.output_dim,
+                                         n_layers=1,
+                                         hidden_dim=1024,
+                                         )
 
             optimizer = torch.optim.Adam(model.parameters(), lr=hparams["learning_rate"],
                                          weight_decay=hparams["weight_decay"])

@@ -27,7 +27,7 @@ class Trainer(object):
             data, target = data.to(self.device), target.to(self.device)
 
             self.optimizer.zero_grad()
-            output, loss = self.model(data, target)
+            probs, logits, loss = self.model(data, target)
             loss.backward()
             self.optimizer.step()
             total_loss += loss.item()
@@ -40,53 +40,52 @@ class Trainer(object):
 
         self.model.eval()
         total_loss = 0
-        all_preds = []
+        all_probs = []
+        all_logits = []
 
         with torch.no_grad():
             for data, target in self.valid_data_loader:
                 data, target = data.to(self.device), target.to(self.device)
-
-                output, loss = self.model(data, target)
-
-                if loss is None:
-                    print("Warning: Loss is None")
-                    print("data", data.shape)
-                    print("target", target.shape)
-                    print("output", output.shape)
-
+                probs, logits, loss = self.model(data, target)
                 total_loss += loss.item()
-                all_preds.append(output.cpu().numpy())
+                all_probs.append(probs.cpu().numpy())
+                all_logits.append(logits.cpu().numpy())
 
-        all_preds = np.concatenate(all_preds, axis=0)
+        all_probs = np.concatenate(all_probs, axis=0)
+        all_logits = np.concatenate(all_logits, axis=0)
         val_filenames = self.valid_data_loader.dataset.filenames
 
         if self.subsample_aggregation:
-            val_filenames, all_preds = self.aggregate_subsamples(val_filenames, all_preds)
+            val_filenames, all_probs = self.aggregate_subsamples(val_filenames, all_logits)
 
-        ret = grid_search_thresholds(val_filenames, all_preds)
+        ret = grid_search_thresholds(val_filenames, all_probs)
         avg_loss = total_loss / len(self.valid_data_loader)
         ret["val_loss"] = avg_loss
         return ret
 
-    def aggregate_subsamples(self, all_video_ids, all_preds):
-        # New aggregation by video_id
-        video_pred_dict = {}
-        for video_id, pred in zip(all_video_ids, all_preds):
-            if video_id not in video_pred_dict:
-                video_pred_dict[video_id] = []
-            video_pred_dict[video_id].append(pred)
+    def aggregate_subsamples(self, all_video_ids, all_logits):
+        # Aggregate logits (NOT softmax outputs)
+        video_logits_dict = {}
+        for video_id, logit in zip(all_video_ids, all_logits):
+            if video_id not in video_logits_dict:
+                video_logits_dict[video_id] = []
+            video_logits_dict[video_id].append(logit)
 
-        aggregated_preds = []
+        aggregated_logits = []
         aggregated_video_ids = []
-        for video_id, preds in video_pred_dict.items():
-            preds = np.stack(preds, axis=0)  # (num_subsamples, num_classes)
-            avg_preds = np.mean(preds, axis=0)  # Average over subsamples
-            aggregated_preds.append(avg_preds)
+        for video_id, logits in video_logits_dict.items():
+            logits = np.stack(logits, axis=0)  # (num_subsamples, num_classes)
+            avg_logits = np.mean(logits, axis=0)  # Average over logits
+            aggregated_logits.append(avg_logits)
             aggregated_video_ids.append(video_id)
 
-        aggregated_preds = np.stack(aggregated_preds, axis=0)
+        aggregated_logits = np.stack(aggregated_logits, axis=0)
         aggregated_video_ids = np.array(aggregated_video_ids)
-        return aggregated_video_ids, aggregated_preds
+
+        # Apply softmax after aggregation
+        aggregated_probs = torch.softmax(torch.from_numpy(aggregated_logits), dim=1).numpy()
+
+        return aggregated_video_ids, aggregated_probs
 
     def train(self, writer=None):
         results = []

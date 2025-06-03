@@ -2,7 +2,7 @@ import pandas as pd
 from torch.utils.data import DataLoader
 import torch
 from torch.utils.tensorboard import SummaryWriter
-from model.models import MultiLabelRNN, MultiLabelLinearNN, MultiLabelLinearNNShallow, MultiLabelLinearNNSuperShallow
+from model.models import ConfigurableLinearNN
 
 from trainer import Trainer
 from utils.create_soft_labels import create_labels
@@ -12,10 +12,28 @@ import os
 hparams = {
     "batch_size": 32,
     "max_seq_len": None,  # Set to None for no padding/truncation
-    "learning_rate": 0.000005,
+    "learning_rate": 5e-6,
     "num_epochs": 100,
     "weight_decay": 1e-3,
 }
+
+
+def select_model_type(model_type, train_dataset):
+    if model_type == "Linear":
+        model = ConfigurableLinearNN(input_dim=train_dataset.input_dim, output_dim=train_dataset.output_dim, n_layers=0)
+    elif model_type == "MLP_256":
+        model = ConfigurableLinearNN(input_dim=train_dataset.input_dim, output_dim=train_dataset.output_dim, n_layers=1, hidden_dim=256)
+    elif model_type == "MLP_512":
+        model = ConfigurableLinearNN(input_dim=train_dataset.input_dim, output_dim=train_dataset.output_dim, n_layers=1, hidden_dim=512)
+    else:
+        raise ValueError(f"Unknown model type: {model_type}")
+    return model
+
+
+def train_and_test(encoder, model_type, fold_id, encoding_folder, train_df, train_labels, device):
+
+
+
 
 def main():
     data_folder = "/home/tim/Work/quantum/data/blemore/"
@@ -39,13 +57,13 @@ def main():
     train_labels = create_labels(train_records)
 
     encoders = ["imagebind", "videomae", "videoswintransformer", "openface", "clip"]
-    models = ["deep", "very_shallow", "shallow"]
+    model_types = ["Linear", "MLP_256", "MLP_512"]
     folds = [0, 1, 2, 3, 4]
 
     summary_rows = []
 
-    for model_type in models:
-        for encoder in encoders:
+    for encoder in encoders:
+        for model_type in model_types:
             for fold_id in folds:
                 print(f"\nRunning encoder={encoder}, model={model_type}, fold={fold_id}")
 
@@ -58,17 +76,12 @@ def main():
                 train_loader = DataLoader(train_dataset, batch_size=hparams["batch_size"], shuffle=True)
                 val_loader = DataLoader(val_dataset, batch_size=hparams["batch_size"], shuffle=False)
 
-                # Model selection
-                if model_type == "deep":
-                    model = MultiLabelLinearNN(input_dim=train_dataset.input_dim,
-                                               output_dim=train_dataset.output_dim,
-                                               activation="softmax")
-                elif model_type == "shallow":
-                    model = MultiLabelLinearNNShallow(input_dim=train_dataset.input_dim,
-                                                      output_dim=train_dataset.output_dim)
-                elif model_type == "very_shallow":
-                    model = MultiLabelLinearNNSuperShallow(input_dim=train_dataset.input_dim,
-                                                           output_dim=train_dataset.output_dim)
+                if model_type == "Linear":
+                    model = ConfigurableLinearNN(input_dim=train_dataset.input_dim, output_dim=train_dataset.output_dim, n_layers=0)
+                elif model_type == "MLP_256":
+                    model = ConfigurableLinearNN(input_dim=train_dataset.input_dim, output_dim=train_dataset.output_dim, n_layers=1, hidden_dim=256)
+                elif model_type == "MLP_512":
+                    model = ConfigurableLinearNN(input_dim=train_dataset.input_dim, output_dim=train_dataset.output_dim, n_layers=1, hidden_dim=512)
                 else:
                     raise ValueError(f"Unknown model type: {model_type}")
 
