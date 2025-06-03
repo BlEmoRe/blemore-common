@@ -110,18 +110,14 @@ def grid_search_thresholds(filenames, preds, presence_weight=0.5, debug_plots=Fa
         plot_grid_heatmap(grid, metric_index=2, title="Presence", cmap="viridis")
         plot_grid_heatmap(grid, metric_index=3, title="Salience", cmap="viridis")
 
-    # print("Best presence ", max(grid, key=lambda x: x[2]))
-    # print("Best salience ", max(grid, key=lambda x: x[3]))
-
-    # df = pd.DataFrame(grid, columns=["alpha", "beta", "Presence", "Salience"])
+    best_presence_only = max(grid, key=lambda x: x[2])[2]
+    best_salience_only = max(grid, key=lambda x: x[3])[3]
 
     sorted_grid = sorted(
         grid,
         key=lambda x: presence_weight * x[2] + (1 - presence_weight) * x[3],
         reverse=True
     )
-
-    # print(f"With score Best alpha: {sorted_grid[0][0]}, Best beta: {sorted_grid[0][1]}, Presence: {sorted_grid[0][2]}, Salience: {sorted_grid[0][3]}")
 
     best_alpha = sorted_grid[0][0]
     best_beta = sorted_grid[0][1]
@@ -134,7 +130,14 @@ def grid_search_thresholds(filenames, preds, presence_weight=0.5, debug_plots=Fa
     if debug_plots:
         summarize_prediction_distribution(final_preds)
 
-    return best_alpha, best_beta, best_acc_presence, best_acc_salience
+    return {
+        "alpha": best_alpha,
+        "beta": best_beta,
+        "acc_presence": best_acc_presence,
+        "acc_salience": best_acc_salience,
+        "presence_only": best_presence_only,
+        "salience_only": best_salience_only
+    }
 
 
 

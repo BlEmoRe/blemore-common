@@ -16,14 +16,20 @@ class MultiLabelLinearNN(nn.Module):
         print("fc1_dim", fc1_dim)
         print("fc2_dim", fc2_dim)
 
+        # self.fc = nn.Sequential(
+        #     nn.Linear(input_dim, fc1_dim),
+        #     nn.ReLU(),
+        #     nn.Dropout(dropout_rate),
+        #     nn.Linear(fc1_dim, fc2_dim),
+        #     nn.ReLU(),
+        #     nn.Dropout(dropout_rate),
+        #     nn.Linear(fc2_dim, output_dim)
+        # )
+
         self.fc = nn.Sequential(
-            nn.Linear(input_dim, fc1_dim),
+            nn.Linear(input_dim, 256),
             nn.ReLU(),
-            nn.Dropout(dropout_rate),
-            nn.Linear(fc1_dim, fc2_dim),
-            nn.ReLU(),
-            nn.Dropout(dropout_rate),
-            nn.Linear(fc2_dim, output_dim)
+            nn.Linear(256, output_dim),
         )
 
     def forward(self, x, targets=None):
@@ -102,7 +108,7 @@ class MultiLabelLinearNNSuperShallow(nn.Module):
 
 class MultiLabelRNN(nn.Module):
 
-    def __init__(self, input_dim, output_dim, activation="entmax15"):
+    def __init__(self, input_dim, output_dim, activation="softmax"):
         super().__init__()
 
         hidden_dim = min(512, max(128, input_dim // 4))

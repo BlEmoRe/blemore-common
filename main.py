@@ -5,11 +5,9 @@ from torch.utils.tensorboard import SummaryWriter
 from model.models import MultiLabelRNN, MultiLabelLinearNN, MultiLabelLinearNNShallow, MultiLabelLinearNNSuperShallow
 
 from trainer import Trainer
-
 from utils.create_soft_labels import create_labels
-from utils.set_splitting import prepare_split_3d, prepare_split_2d
+from utils.set_splitting import prepare_split_2d
 import os
-
 
 hparams = {
     "batch_size": 32,
@@ -19,11 +17,8 @@ hparams = {
     "weight_decay": 1e-3,
 }
 
-
 def main():
-
     data_folder = "/home/tim/Work/quantum/data/blemore/"
-    # data_folder = "/home/user/Work/quantum/data/blemore/"
 
     # paths
     train_metadata = os.path.join(data_folder, "train_metadata.csv")
@@ -63,18 +58,17 @@ def main():
                 train_loader = DataLoader(train_dataset, batch_size=hparams["batch_size"], shuffle=True)
                 val_loader = DataLoader(val_dataset, batch_size=hparams["batch_size"], shuffle=False)
 
+                # Model selection
                 if model_type == "deep":
                     model = MultiLabelLinearNN(input_dim=train_dataset.input_dim,
-                                                   output_dim=train_dataset.output_dim,
-                                                   activation="softmax")
+                                               output_dim=train_dataset.output_dim,
+                                               activation="softmax")
                 elif model_type == "shallow":
                     model = MultiLabelLinearNNShallow(input_dim=train_dataset.input_dim,
-                                             output_dim=train_dataset.output_dim)
-
+                                                      output_dim=train_dataset.output_dim)
                 elif model_type == "very_shallow":
                     model = MultiLabelLinearNNSuperShallow(input_dim=train_dataset.input_dim,
-                                          output_dim=train_dataset.output_dim)
-
+                                                           output_dim=train_dataset.output_dim)
                 else:
                     raise ValueError(f"Unknown model type: {model_type}")
 
@@ -90,7 +84,6 @@ def main():
                 log_dir = f"runs/{encoder}_{model_type}_fold{fold_id}"
                 writer = SummaryWriter(log_dir=log_dir)
                 res = trainer.train(writer=writer)
-
                 writer.close()
 
                 best_epoch = max(res, key=lambda r: 0.5 * r["best_acc_presence"] + 0.5 * r["best_acc_salience"])
@@ -107,14 +100,12 @@ def main():
                     "beta": best_epoch["best_beta"],
                 })
 
-        summary_df = pd.DataFrame(summary_rows)
-        print(summary_df)
-        summary_df.to_csv("validation_summary.csv", index=False)
+    summary_df = pd.DataFrame(summary_rows)
+    print(summary_df)
+    summary_df.to_csv("validation_summary.csv", index=False)
 
-        print("\nFold-averaged results:")
-        print(summary_df.groupby(["encoder", "model"])[["acc_presence", "acc_salience"]].mean())
-
-
+    print("\nFold-averaged results:")
+    print(summary_df.groupby(["encoder", "model"])[["acc_presence", "acc_salience"]].mean())
 
 if __name__ == "__main__":
     main()
