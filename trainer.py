@@ -2,7 +2,7 @@ import torch
 import numpy as np
 
 from post_processing import grid_search_thresholds
-
+from utils.subsample_utils import aggregate_subsamples
 
 class Trainer(object):
 
@@ -56,36 +56,12 @@ class Trainer(object):
         val_filenames = self.valid_data_loader.dataset.filenames
 
         if self.subsample_aggregation:
-            val_filenames, all_probs = self.aggregate_subsamples(val_filenames, all_logits)
+            val_filenames, all_probs = aggregate_subsamples(val_filenames, all_logits)
 
         ret = grid_search_thresholds(val_filenames, all_probs)
         avg_loss = total_loss / len(self.valid_data_loader)
         ret["val_loss"] = avg_loss
         return ret
-
-    def aggregate_subsamples(self, all_video_ids, all_logits):
-        # Aggregate logits (NOT softmax outputs)
-        video_logits_dict = {}
-        for video_id, logit in zip(all_video_ids, all_logits):
-            if video_id not in video_logits_dict:
-                video_logits_dict[video_id] = []
-            video_logits_dict[video_id].append(logit)
-
-        aggregated_logits = []
-        aggregated_video_ids = []
-        for video_id, logits in video_logits_dict.items():
-            logits = np.stack(logits, axis=0)  # (num_subsamples, num_classes)
-            avg_logits = np.mean(logits, axis=0)  # Average over logits
-            aggregated_logits.append(avg_logits)
-            aggregated_video_ids.append(video_id)
-
-        aggregated_logits = np.stack(aggregated_logits, axis=0)
-        aggregated_video_ids = np.array(aggregated_video_ids)
-
-        # Apply softmax after aggregation
-        aggregated_probs = torch.softmax(torch.from_numpy(aggregated_logits), dim=1).numpy()
-
-        return aggregated_video_ids, aggregated_probs
 
     def train(self, writer=None):
         results = []
@@ -97,24 +73,25 @@ class Trainer(object):
             if writer:
                 writer.add_scalar("Loss/train", train_loss, epoch)
 
-            stats = self.validate()
-            print(f"Epoch [{epoch + 1}/{self.epochs}], "
-                  f"Validation Loss: {stats['val_loss']:.4f}, "
-                  f"Best Alpha: {stats['alpha']:.4f}, "
-                  f"Best Beta: {stats['beta']:.4f}, "
-                  f"Best Acc Presence: {stats['acc_presence']:.4f}, "
-                  f"Best Acc Salience: {stats['acc_salience']:.4f}, "
-                  f"Best possible Acc Presence : {stats['presence_only']:.4f}, "
-                  f"Best possible Acc Salience : {stats['salience_only']:.4f}")
+            if self.valid_data_loader is not None:
+                stats = self.validate()
+                print(f"Epoch [{epoch + 1}/{self.epochs}], "
+                      f"Validation Loss: {stats['val_loss']:.4f}, "
+                      f"Best Alpha: {stats['alpha']:.4f}, "
+                      f"Best Beta: {stats['beta']:.4f}, "
+                      f"Best Acc Presence: {stats['acc_presence']:.4f}, "
+                      f"Best Acc Salience: {stats['acc_salience']:.4f}, "
+                      f"Best possible Acc Presence : {stats['presence_only']:.4f}, "
+                      f"Best possible Acc Salience : {stats['salience_only']:.4f}")
 
-            if writer:
-                writer.add_scalar("Loss/val", stats['val_loss'], epoch)
-                writer.add_scalar("Accuracy/presence", stats['acc_presence'], epoch)
-                writer.add_scalar("Accuracy/salience", stats['acc_salience'], epoch)
-                writer.add_scalar("Alpha", stats['alpha'], epoch)
-                writer.add_scalar("Beta", stats['beta'], epoch)
-                writer.add_scalar("Best possible Accuracy/presence", stats['presence_only'], epoch)
-                writer.add_scalar("Best possible Accuracy/salience", stats['salience_only'], epoch)
+                if writer:
+                    writer.add_scalar("Loss/val", stats['val_loss'], epoch)
+                    writer.add_scalar("Accuracy/presence", stats['acc_presence'], epoch)
+                    writer.add_scalar("Accuracy/salience", stats['acc_salience'], epoch)
+                    writer.add_scalar("Alpha", stats['alpha'], epoch)
+                    writer.add_scalar("Beta", stats['beta'], epoch)
+                    writer.add_scalar("Best possible Accuracy/presence", stats['presence_only'], epoch)
+                    writer.add_scalar("Best possible Accuracy/salience", stats['salience_only'], epoch)
 
             results.append({
                 "epoch": epoch + 1,
