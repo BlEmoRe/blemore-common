@@ -7,49 +7,23 @@ from datasets.subsample_dataset import SubsampledVideoDataset
 from utils.standardization import create_transform
 
 
-def filter_basic_samples(filenames, labels, mix_flags):
-    mask = np.array(mix_flags) == 0
-    return [f for f, keep in zip(filenames, mask) if keep], labels[mask]
-
-
-def extract_files_and_labels(df, labels, mask, only_basic=False):
+def extract_files_and_labels(df, labels, mask):
     files = df.loc[mask, "filename"].tolist()
     subset_labels = labels[mask.to_numpy()]
-    mix = df.loc[mask, "mix"].tolist()
-
-    if only_basic:
-        files, subset_labels = filter_basic_samples(files, subset_labels, mix)
-
     return files, subset_labels
 
 
-def get_split_files_and_labels(df, labels, fold_id, only_basic=False):
+def get_validation_split(df, labels, fold_id):
     train_mask = df["fold"] != fold_id
     val_mask = df["fold"] == fold_id
 
-    train_files, train_labels = extract_files_and_labels(df, labels, train_mask, only_basic)
-    val_files, val_labels = extract_files_and_labels(df, labels, val_mask, only_basic)
+    train_files, train_labels = extract_files_and_labels(df, labels, train_mask)
+    val_files, val_labels = extract_files_and_labels(df, labels, val_mask)
 
     return (train_files, train_labels), (val_files, val_labels)
 
 
-def prepare_split_3d(df, labels, fold_id, encoding_folder, only_basic=False):
-    (train_files, train_labels), (val_files, val_labels) = get_split_files_and_labels(
-        df=df,
-        labels=labels,
-        fold_id=fold_id,
-        only_basic=only_basic
-    )
-    scaler = create_transform(train_files, encoding_folder)
-
-    # scaler = None
-
-    train_dataset = D3Dataset(filenames=train_files, labels=train_labels, encoding_dir=encoding_folder, scaler=scaler)
-    val_dataset = D3Dataset(filenames=val_files, labels=val_labels, encoding_dir=encoding_folder, scaler=scaler)
-    return train_dataset, val_dataset
-
-
-def prepare_split_2d(df, labels, fold_id, filepath, only_basic=False):
+def prepare_split_2d(df, labels, fold_id, filepath):
     # Load full feature data and filenames
     data = np.load(filepath)
     X = data["X"]
@@ -57,11 +31,10 @@ def prepare_split_2d(df, labels, fold_id, filepath, only_basic=False):
     all_filenames = data["filenames"]
 
     # Get train/val filename lists and corresponding labels
-    (train_files, train_labels), (val_files, val_labels) = get_split_files_and_labels(
+    (train_files, train_labels), (val_files, val_labels) = get_validation_split(
         df=df,
         labels=labels,
         fold_id=fold_id,
-        only_basic=only_basic
     )
 
     # Map filenames to indices in the X matrix
@@ -89,15 +62,14 @@ def prepare_split_2d(df, labels, fold_id, filepath, only_basic=False):
     return train_dataset, val_dataset
 
 
-def prepare_split_subsampled(df, labels, fold_id, data_dir, only_basic=False):
+def prepare_split_subsampled(df, labels, fold_id, data_dir):
     """
     data_dir: directory containing .npy files for each video.
     """
-    (train_videos, train_labels), (val_videos, val_labels) = get_split_files_and_labels(
+    (train_videos, train_labels), (val_videos, val_labels) = get_validation_split(
         df=df,
         labels=labels,
         fold_id=fold_id,
-        only_basic=only_basic
     )
 
     # Initialize datasets

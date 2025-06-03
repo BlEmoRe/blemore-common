@@ -31,7 +31,7 @@ def select_model_type(model_type, train_dataset):
 
 
 def train_and_test(encoder, model_type, fold_id, encoding_folder, train_df, train_labels, device):
-
+    pass
 
 
 
@@ -70,20 +70,15 @@ def main():
                 # Pick encoding path
                 encoding_folder = encoding_paths_2d[encoder]
 
+
+
                 # Dataset split
                 train_dataset, val_dataset = prepare_split_2d(train_df, train_labels, fold_id, encoding_folder)
 
                 train_loader = DataLoader(train_dataset, batch_size=hparams["batch_size"], shuffle=True)
                 val_loader = DataLoader(val_dataset, batch_size=hparams["batch_size"], shuffle=False)
 
-                if model_type == "Linear":
-                    model = ConfigurableLinearNN(input_dim=train_dataset.input_dim, output_dim=train_dataset.output_dim, n_layers=0)
-                elif model_type == "MLP_256":
-                    model = ConfigurableLinearNN(input_dim=train_dataset.input_dim, output_dim=train_dataset.output_dim, n_layers=1, hidden_dim=256)
-                elif model_type == "MLP_512":
-                    model = ConfigurableLinearNN(input_dim=train_dataset.input_dim, output_dim=train_dataset.output_dim, n_layers=1, hidden_dim=512)
-                else:
-                    raise ValueError(f"Unknown model type: {model_type}")
+                model = select_model_type(model_type, train_dataset)
 
                 optimizer = torch.optim.Adam(model.parameters(), lr=hparams["learning_rate"],
                                              weight_decay=hparams["weight_decay"])
