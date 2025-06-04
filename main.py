@@ -27,7 +27,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 hparams = {
     "batch_size": 32,
     "learning_rate": 5e-6,
-    "num_epochs": 200,
+    "num_epochs": 5,
     "weight_decay": 1e-3,
 }
 
@@ -48,11 +48,11 @@ encoding_paths = {
 
 def select_model(model_type, input_dim, output_dim):
     if model_type == "Linear":
-        return ConfigurableLinearNN(input_dim=input_dim, output_dim=output_dim, n_layers=0)
+        return ConfigurableLinearNN(input_dim=input_dim, output_dim=output_dim, model_type= model_type, n_layers=0)
     elif model_type == "MLP_256":
-        return ConfigurableLinearNN(input_dim=input_dim, output_dim=output_dim, n_layers=1, hidden_dim=256)
+        return ConfigurableLinearNN(input_dim=input_dim, output_dim=output_dim, model_type= model_type, n_layers=1, hidden_dim=256)
     elif model_type == "MLP_512":
-        return ConfigurableLinearNN(input_dim=input_dim, output_dim=output_dim, n_layers=1, hidden_dim=512)
+        return ConfigurableLinearNN(input_dim=input_dim, output_dim=output_dim, model_type= model_type, n_layers=1, hidden_dim=512)
     else:
         raise ValueError(f"Unknown model type: {model_type}")
 
@@ -88,17 +88,6 @@ def train_and_test_from_scratch(train_dataset, test_dataset, model_type, alpha, 
                       subsample_aggregation=False)
 
     trainer.train()
-
-    return evaluate_model(model, test_loader, alpha, beta)
-
-
-def evaluate_existing_model(model_path, test_dataset, alpha, beta):
-    test_loader = DataLoader(test_dataset, batch_size=hparams["batch_size"], shuffle=False)
-
-    # Load model directly
-    model = torch.load(model_path, map_location=device)
-    model.to(device)
-    model.eval()
 
     return evaluate_model(model, test_loader, alpha, beta)
 
@@ -187,16 +176,14 @@ def run_test(train_df, train_labels, test_df, test_labels, encoders, model_types
                 best_model_path = f"checkpoints/{encoder}_{model_type}_fold{fold_id}_best.pth"
                 print(f"Loading model from {best_model_path}")
 
-                model = torch.load(best_model_path, map_location=device)
+                checkpoint = torch.load(best_model_path, map_location=device)
+                model = select_model(checkpoint['model_type'], checkpoint['input_dim'], checkpoint['output_dim'])
+                model.load_state_dict(checkpoint['model_state_dict'])
                 model.to(device)
-                model.eval()
+                test_loader = DataLoader(test_dataset, batch_size=hparams["batch_size"], shuffle=False)
 
-                acc_presence, acc_salience = evaluate_model(model, test_dataset, alpha_best, beta_best)
+                acc_presence, acc_salience = evaluate_model(model, test_loader, alpha_best, beta_best)
             else:
-                # Retrain on full train set
-                train_files = train_df.filename.tolist()
-                train_dataset, _ = prepare_split_2d(train_files, train_labels, test_files, test_labels, encoding_path)
-
                 acc_presence, acc_salience = train_and_test_from_scratch(train_dataset, test_dataset, model_type, alpha_best, beta_best)
 
             print(f"Test Accuracy Presence: {acc_presence:.4f}, Salience: {acc_salience:.4f}")
@@ -233,8 +220,8 @@ def main(do_val=True, do_test=True):
     encoders = ["imagebind", "videomae", "videoswintransformer", "openface", "clip"]
     model_types = ["Linear", "MLP_256", "MLP_512"]
 
-    # encoders = ["imagebind"]
-    # model_types = ["Linear"]
+    encoders = ["imagebind", "videomae"]
+    model_types = ["Linear"]
 
     if do_val:
         run_validation(train_df, train_labels, encoders, model_types)

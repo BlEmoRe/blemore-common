@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 
 class ConfigurableLinearNN(nn.Module):
-    def __init__(self, input_dim, output_dim, n_layers=1, hidden_dim=256):
+    def __init__(self, input_dim, output_dim, model_type, n_layers=1, hidden_dim=256):
         """
         A configurable feedforward neural network with up to 2 hidden layers.
 
@@ -15,6 +15,7 @@ class ConfigurableLinearNN(nn.Module):
             hidden_dim (int): Number of units in each hidden layer.
         """
 
+        self.model_type = model_type
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.n_layers = n_layers
