@@ -104,7 +104,8 @@ def train_and_test(train_dataset, test_dataset, model_type, alpha, beta):
 
 
 def main():
-    data_folder = "/home/tim/Work/quantum/data/blemore/"
+    # data_folder = "/home/tim/Work/quantum/data/blemore/"
+    data_folder = "/home/user/Work/quantum/data/blemore/"
 
     # Paths
     train_metadata = os.path.join(data_folder, "train_metadata.csv")
@@ -139,7 +140,7 @@ def main():
 
                 train_dataset, val_dataset = prepare_split_subsampled(train_df, train_labels, fold_id, encoding_path)
 
-                log_dir = f"runs/{encoder}_{model_type}_fold{fold_id}"
+                log_dir = f"runs/subsampling_{encoder}_{model_type}_fold{fold_id}"
                 best_epoch = train_one_fold(train_dataset, val_dataset, model_type, log_dir)
                 best_epoch.update({"encoder": encoder, "model": model_type, "fold": fold_id})
 

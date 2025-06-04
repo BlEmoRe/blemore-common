@@ -1,12 +1,13 @@
 import torch
 import numpy as np
+import os
 
 from post_processing import grid_search_thresholds
 from utils.subsample_utils import aggregate_subsamples
 
 class Trainer(object):
 
-    def __init__(self, model, optimizer, data_loader, epochs, valid_data_loader=None, subsample_aggregation=True):
+    def __init__(self, model, optimizer, data_loader, epochs, valid_data_loader=None, subsample_aggregation=False, save_dir="checkpoints"):
         self.model = model
         self.optimizer = optimizer
 
@@ -18,6 +19,10 @@ class Trainer(object):
         self.epochs = epochs
         self.valid_data_loader = valid_data_loader
         self.subsample_aggregation = subsample_aggregation
+
+        self.save_dir = save_dir
+        os.makedirs(self.save_dir, exist_ok=True)
+        self.best_val_score = -np.inf  # Higher is better
 
     def train_epoch(self):
         self.model.train()
@@ -63,8 +68,9 @@ class Trainer(object):
         ret["val_loss"] = avg_loss
         return ret
 
-    def train(self, writer=None):
-        results = []
+    def train(self, writer=None, save_prefix="model"):
+        best_epoch_stats = None
+        best_model_path = None
 
         for epoch in range(self.epochs):
             train_loss = self.train_epoch()
@@ -75,6 +81,8 @@ class Trainer(object):
 
             if self.valid_data_loader is not None:
                 stats = self.validate()
+                val_score = 0.5 * stats['acc_presence'] + 0.5 * stats['acc_salience']  # scoring metric
+
                 print(f"Epoch [{epoch + 1}/{self.epochs}], "
                       f"Validation Loss: {stats['val_loss']:.4f}, "
                       f"Best Alpha: {stats['alpha']:.4f}, "
@@ -93,14 +101,20 @@ class Trainer(object):
                     writer.add_scalar("Best possible Accuracy/presence", stats['presence_only'], epoch)
                     writer.add_scalar("Best possible Accuracy/salience", stats['salience_only'], epoch)
 
-            results.append({
-                "epoch": epoch + 1,
-                "train_loss": train_loss,
-                "val_loss": stats['val_loss'] if self.valid_data_loader else None,
-                "best_alpha": stats['alpha'] if self.valid_data_loader else None,
-                "best_beta": stats['beta'] if self.valid_data_loader else None,
-                "best_acc_presence": stats['acc_presence'] if self.valid_data_loader else None,
-                "best_acc_salience": stats['acc_salience'] if self.valid_data_loader else None
-            })
+                if val_score > self.best_val_score:
+                    # Save best model
+                    self.best_val_score = val_score
+                    best_model_path = os.path.join(self.save_dir, f"{save_prefix}_best.pth")
+                    torch.save(self.model.state_dict(), best_model_path)
 
-        return results
+                    best_epoch_stats = {
+                        "epoch": epoch + 1,
+                        "train_loss": train_loss,
+                        "val_loss": stats['val_loss'],
+                        "best_alpha": stats['alpha'],
+                        "best_beta": stats['beta'],
+                        "best_acc_presence": stats['acc_presence'],
+                        "best_acc_salience": stats['acc_salience'],
+                    }
+
+        return best_epoch_stats, best_model_path
