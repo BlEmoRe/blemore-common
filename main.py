@@ -27,7 +27,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 hparams = {
     "batch_size": 32,
     "learning_rate": 5e-6,
-    "num_epochs": 5,
+    "num_epochs": 200,
     "weight_decay": 1e-3,
 }
 
@@ -219,9 +219,6 @@ def main(do_val=True, do_test=True):
 
     encoders = ["imagebind", "videomae", "videoswintransformer", "openface", "clip"]
     model_types = ["Linear", "MLP_256", "MLP_512"]
-
-    encoders = ["imagebind", "videomae"]
-    model_types = ["Linear"]
 
     if do_val:
         run_validation(train_df, train_labels, encoders, model_types)

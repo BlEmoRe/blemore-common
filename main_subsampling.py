@@ -30,23 +30,31 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 hparams = {
     "batch_size": 512,
     "learning_rate": 5e-6,
-    "num_epochs": 200,
+    "num_epochs": 300,
     "weight_decay": 1e-3,
 }
 
+data_folder = "/home/user/Work/quantum/data/blemore/"
+
+train_metadata_path = os.path.join(data_folder, "train_metadata.csv")
+test_metadata_path = os.path.join(data_folder, "test_metadata.csv")
+
+encoding_paths_3d = {
+    "videoswintransformer": os.path.join(data_folder, "encoded_videos/dynamic_data/VideoSwinTransformer/"),
+    "videomae": os.path.join(data_folder, "encoded_videos/dynamic_data/VideoMAEv2_reshaped/"),
+}
 
 def select_model(model_type, input_dim, output_dim):
     if model_type == "Linear":
-        return ConfigurableLinearNN(input_dim=input_dim, output_dim=output_dim, n_layers=0)
+        return ConfigurableLinearNN(input_dim=input_dim, output_dim=output_dim, model_type=model_type, n_layers=0)
     elif model_type == "MLP_256":
-        return ConfigurableLinearNN(input_dim=input_dim, output_dim=output_dim, n_layers=1, hidden_dim=256)
+        return ConfigurableLinearNN(input_dim=input_dim, output_dim=output_dim, model_type=model_type, n_layers=1, hidden_dim=256)
     elif model_type == "MLP_512":
-        return ConfigurableLinearNN(input_dim=input_dim, output_dim=output_dim, n_layers=1, hidden_dim=512)
+        return ConfigurableLinearNN(input_dim=input_dim, output_dim=output_dim, model_type=model_type, n_layers=1, hidden_dim=512)
     else:
         raise ValueError(f"Unknown model type: {model_type}")
 
-
-def train_one_fold(train_dataset, val_dataset, model_type, log_dir):
+def train_one_fold(train_dataset, val_dataset, model_type, log_dir, save_prefix):
     train_loader = DataLoader(train_dataset, batch_size=hparams["batch_size"], shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=hparams["batch_size"], shuffle=False)
 
@@ -59,14 +67,11 @@ def train_one_fold(train_dataset, val_dataset, model_type, log_dir):
                       valid_data_loader=val_loader, subsample_aggregation=True)
 
     writer = SummaryWriter(log_dir=log_dir)
-    res = trainer.train(writer=writer)
+    best_epoch, best_model_path = trainer.train(writer=writer, save_prefix=save_prefix)
     writer.close()
+    return best_epoch, best_model_path
 
-    best_epoch = max(res, key=lambda r: 0.5 * r["best_acc_presence"] + 0.5 * r["best_acc_salience"])
-    return best_epoch
-
-
-def train_and_test(train_dataset, test_dataset, model_type, alpha, beta):
+def train_and_test_from_scratch(train_dataset, test_dataset, model_type, alpha, beta):
     train_loader = DataLoader(train_dataset, batch_size=hparams["batch_size"], shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=hparams["batch_size"], shuffle=False)
 
@@ -80,12 +85,15 @@ def train_and_test(train_dataset, test_dataset, model_type, alpha, beta):
 
     trainer.train()
 
+    return evaluate_model(model, test_loader, alpha, beta)
+
+def evaluate_model(model, test_loader, alpha, beta):
     all_logits = []
     model.eval()
     with torch.no_grad():
         for data, _ in test_loader:
             data = data.to(device)
-            probs, logits, loss = model(data)
+            _, logits, _ = model(data)
             all_logits.append(logits.cpu().numpy())
 
     all_logits = np.concatenate(all_logits, axis=0)
@@ -102,59 +110,54 @@ def train_and_test(train_dataset, test_dataset, model_type, alpha, beta):
 
     return acc_presence, acc_salience
 
-
-def main():
-    # data_folder = "/home/tim/Work/quantum/data/blemore/"
-    data_folder = "/home/user/Work/quantum/data/blemore/"
-
-    # Paths
-    train_metadata = os.path.join(data_folder, "train_metadata.csv")
-    test_metadata = os.path.join(data_folder, "test_metadata.csv")
-
-    encoding_paths_3d = {
-        "videoswintransformer": os.path.join(data_folder, "encoded_videos/dynamic_data/VideoSwinTransformer/"),
-        "videomae": os.path.join(data_folder, "encoded_videos/dynamic_data/VideoMAEv2_reshaped/"),
-    }
-
-    train_df = pd.read_csv(train_metadata)
-    train_labels = create_labels(train_df.to_dict(orient="records"))
-
-    test_df = pd.read_csv(test_metadata)
-    test_labels = create_labels(test_df.to_dict(orient="records"))
-
-    encoders_3d = ["videomae", "videoswintransformer"]
-    model_types = ["Linear", "MLP_256", "MLP_512"]
+def run_validation(train_df, train_labels, encoders, model_types):
     folds = [0, 1, 2, 3, 4]
-
     summary_rows = []
-    test_summary_rows = []
 
-    for encoder in encoders_3d:
+    for encoder in encoders:
         encoding_path = encoding_paths_3d[encoder]
 
         for model_type in model_types:
-            fold_results = []
-
             for fold_id in folds:
                 print(f"\nRunning encoder={encoder}, model={model_type}, fold={fold_id}")
 
                 train_dataset, val_dataset = prepare_split_subsampled(train_df, train_labels, fold_id, encoding_path)
 
                 log_dir = f"runs/subsampling_{encoder}_{model_type}_fold{fold_id}"
-                best_epoch = train_one_fold(train_dataset, val_dataset, model_type, log_dir)
+                save_prefix = f"subsampling_{encoder}_{model_type}_fold{fold_id}"
+                best_epoch, _ = train_one_fold(train_dataset, val_dataset, model_type, log_dir, save_prefix)
+
                 best_epoch.update({"encoder": encoder, "model": model_type, "fold": fold_id})
-
                 summary_rows.append(best_epoch)
-                fold_results.append(best_epoch)
 
-            # Average alpha and beta
-            fold_df = pd.DataFrame(fold_results)
-            alpha_mean = fold_df["best_alpha"].mean()
-            beta_mean = fold_df["best_beta"].mean()
+    # Save validation results
+    summary_df = pd.DataFrame(summary_rows)
+    summary_df.to_csv("validation_summary_subsampled.csv", index=False)
+    print("\nValidation Summary:")
+    print(summary_df)
 
-            print(f"Selected alpha: {alpha_mean:.4f}, beta: {beta_mean:.4f} for encoder={encoder}, model={model_type}")
+    return summary_df
 
-            # Full training set (no fold split)
+def run_test(train_df, train_labels, test_df, test_labels, encoders, model_types, use_best_model_from_val=True):
+    test_summary_rows = []
+    summary_df = pd.read_csv("validation_summary_subsampled.csv")
+
+    for encoder in encoders:
+        encoding_path = encoding_paths_3d[encoder]
+
+        for model_type in model_types:
+            fold_df = summary_df[(summary_df["encoder"] == encoder) & (summary_df["model"] == model_type)]
+
+            best_row = fold_df.loc[
+                (0.5 * fold_df["best_acc_presence"] + 0.5 * fold_df["best_acc_salience"]).idxmax()
+            ]
+            alpha_best = best_row["best_alpha"]
+            beta_best = best_row["best_beta"]
+            fold_id = best_row["fold"]
+
+            print(f"Selected alpha: {alpha_best:.4f}, beta: {beta_best:.4f} for encoder={encoder}, model={model_type}")
+
+            # Full training set
             train_files = train_df.filename.tolist()
             test_files = test_df.filename.tolist()
 
@@ -165,39 +168,54 @@ def main():
             train_dataset.features = scaler.fit_transform(train_dataset.features)
             test_dataset.features = scaler.transform(test_dataset.features)
 
-            acc_presence, acc_salience = train_and_test(train_dataset, test_dataset, model_type, alpha_mean, beta_mean)
+            if use_best_model_from_val:
+                best_model_path = f"checkpoints/subsampling_{encoder}_{model_type}_fold{fold_id}_best.pth"
+                print(f"Loading model from {best_model_path}")
+
+                checkpoint = torch.load(best_model_path, map_location=device)
+                model = select_model(checkpoint['model_type'], checkpoint['input_dim'], checkpoint['output_dim'])
+                model.load_state_dict(checkpoint['model_state_dict'])
+                model.to(device)
+                test_loader = DataLoader(test_dataset, batch_size=hparams["batch_size"], shuffle=False)
+
+                acc_presence, acc_salience = evaluate_model(model, test_loader, alpha_best, beta_best)
+            else:
+                acc_presence, acc_salience = train_and_test_from_scratch(train_dataset, test_dataset, model_type, alpha_best, beta_best)
 
             print(f"Test Accuracy Presence: {acc_presence:.4f}, Salience: {acc_salience:.4f}")
 
             test_summary_rows.append({
                 "encoder": encoder,
                 "model": model_type,
-                "alpha": alpha_mean,
-                "beta": beta_mean,
+                "alpha": alpha_best,
+                "beta": beta_best,
                 "test_acc_presence": acc_presence,
                 "test_acc_salience": acc_salience,
             })
 
-    # Save validation results
-    summary_df = pd.DataFrame(summary_rows)
-    summary_df.to_csv("validation_summary_subsampled.csv", index=False)
-    print("\nValidation Summary:")
-    print(summary_df)
-
-    # Save test results
     test_summary_df = pd.DataFrame(test_summary_rows)
     test_summary_df.to_csv("test_summary_subsampled.csv", index=False)
     print("\nTest Summary:")
     print(test_summary_df)
 
-    # Fold-averaged validation results
-    print("\nFold-averaged Validation Results:")
-    print(summary_df.groupby(["encoder", "model"])[["best_acc_presence", "best_acc_salience"]].mean())
-
-    # Encoder/model-averaged test results
     print("\nAveraged Test Results:")
     print(test_summary_df.groupby(["encoder", "model"])[["test_acc_presence", "test_acc_salience"]].mean())
 
+def main(do_val=True, do_test=True):
+    train_df = pd.read_csv(train_metadata_path)
+    train_labels = create_labels(train_df.to_dict(orient="records"))
+
+    test_df = pd.read_csv(test_metadata_path)
+    test_labels = create_labels(test_df.to_dict(orient="records"))
+
+    encoders = ["videomae", "videoswintransformer"]
+    model_types = ["Linear", "MLP_256", "MLP_512"]
+
+    if do_val:
+        run_validation(train_df, train_labels, encoders, model_types)
+
+    if do_test:
+        run_test(train_df, train_labels, test_df, test_labels, encoders, model_types, use_best_model_from_val=True)
 
 if __name__ == "__main__":
-    main()
+    main(do_val=True, do_test=True)
