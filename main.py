@@ -70,12 +70,12 @@ def train_one_fold(train_dataset, val_dataset, model_type, log_dir, save_prefix)
                       valid_data_loader=val_loader, subsample_aggregation=False)
 
     writer = SummaryWriter(log_dir=log_dir)
-    best_epoch, best_model_path = trainer.train(writer=writer)
+    best_epoch, best_model_path = trainer.train(writer=writer, save_prefix=save_prefix)
     writer.close()
     return best_epoch, best_model_path
 
 
-def train_and_test(train_dataset, test_dataset, model_type, alpha, beta):
+def train_and_test_from_scratch(train_dataset, test_dataset, model_type, alpha, beta):
     train_loader = DataLoader(train_dataset, batch_size=hparams["batch_size"], shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=hparams["batch_size"], shuffle=False)
 
@@ -84,11 +84,26 @@ def train_and_test(train_dataset, test_dataset, model_type, alpha, beta):
     model.to(device)
 
     trainer = Trainer(model=model, optimizer=optimizer,
-                      data_loader=train_loader, epochs=100,
+                      data_loader=train_loader, epochs=hparams["num_epochs"],
                       subsample_aggregation=False)
 
     trainer.train()
 
+    return evaluate_model(model, test_loader, alpha, beta)
+
+
+def evaluate_existing_model(model_path, test_dataset, alpha, beta):
+    test_loader = DataLoader(test_dataset, batch_size=hparams["batch_size"], shuffle=False)
+
+    # Load model directly
+    model = torch.load(model_path, map_location=device)
+    model.to(device)
+    model.eval()
+
+    return evaluate_model(model, test_loader, alpha, beta)
+
+
+def evaluate_model(model, test_loader, alpha, beta):
     all_probs = []
     model.eval()
     with torch.no_grad():
@@ -108,7 +123,6 @@ def train_and_test(train_dataset, test_dataset, model_type, alpha, beta):
 
     return acc_presence, acc_salience
 
-
 def run_validation(train_df, train_labels, encoders, model_types):
     folds = [0, 1, 2, 3, 4]
 
@@ -124,7 +138,8 @@ def run_validation(train_df, train_labels, encoders, model_types):
                 train_dataset, val_dataset = prepare_split_2d(train_files, train_labels_fold, val_files, val_labels, encoding_path)
 
                 log_dir = f"runs/{encoder}_{model_type}_fold{fold_id}"
-                best_epoch, _ = train_one_fold(train_dataset, val_dataset, model_type, log_dir)
+                save_prefix = f"{encoder}_{model_type}_fold{fold_id}"
+                best_epoch, _ = train_one_fold(train_dataset, val_dataset, model_type, log_dir, save_prefix)
 
                 best_epoch.update({"encoder": encoder, "model": model_type, "fold": fold_id})
                 summary_rows.append(best_epoch)
@@ -139,7 +154,7 @@ def run_validation(train_df, train_labels, encoders, model_types):
     return summary_df
 
 
-def run_test(train_df, train_labels, test_df, test_labels, encoders, model_types):
+def run_test(train_df, train_labels, test_df, test_labels, encoders, model_types, use_best_model_from_val=True):
     test_summary_rows = []
 
     # Load validation summary
@@ -152,12 +167,13 @@ def run_test(train_df, train_labels, test_df, test_labels, encoders, model_types
             # Filter for encoder and model type
             fold_df = summary_df[(summary_df["encoder"] == encoder) & (summary_df["model"] == model_type)]
 
-            # Select alpha and beta from the best fold (highest average of presence and salience accuracy)
+            # Select alpha and beta from the best fold
             best_row = fold_df.loc[
                 (0.5 * fold_df["best_acc_presence"] + 0.5 * fold_df["best_acc_salience"]).idxmax()
             ]
             alpha_best = best_row["best_alpha"]
             beta_best = best_row["best_beta"]
+            fold_id = best_row["fold"]
 
             print(f"Selected alpha: {alpha_best:.4f}, beta: {beta_best:.4f} for encoder={encoder}, model={model_type}")
 
@@ -166,8 +182,24 @@ def run_test(train_df, train_labels, test_df, test_labels, encoders, model_types
             test_files = test_df.filename.tolist()
             train_dataset, test_dataset = prepare_split_2d(train_files, train_labels, test_files, test_labels, encoding_path)
 
-            acc_presence, acc_salience = train_and_test(train_dataset, test_dataset, model_type, alpha_best, beta_best)
+            if use_best_model_from_val:
+                # Use best model from validation
+                best_model_path = f"checkpoints/{encoder}_{model_type}_fold{fold_id}_best.pth"
+                print(f"Loading model from {best_model_path}")
 
+                model = torch.load(best_model_path, map_location=device)
+                model.to(device)
+                model.eval()
+
+                acc_presence, acc_salience = evaluate_model(model, test_dataset, alpha_best, beta_best)
+            else:
+                # Retrain on full train set
+                train_files = train_df.filename.tolist()
+                train_dataset, _ = prepare_split_2d(train_files, train_labels, test_files, test_labels, encoding_path)
+
+                acc_presence, acc_salience = train_and_test_from_scratch(train_dataset, test_dataset, model_type, alpha_best, beta_best)
+
+            print(f"Test Accuracy Presence: {acc_presence:.4f}, Salience: {acc_salience:.4f}")
             print(f"Test Accuracy Presence: {acc_presence:.4f}, Salience: {acc_salience:.4f}")
 
             # Save test results
@@ -201,11 +233,14 @@ def main(do_val=True, do_test=True):
     encoders = ["imagebind", "videomae", "videoswintransformer", "openface", "clip"]
     model_types = ["Linear", "MLP_256", "MLP_512"]
 
+    # encoders = ["imagebind"]
+    # model_types = ["Linear"]
+
     if do_val:
         run_validation(train_df, train_labels, encoders, model_types)
 
     if do_test:
-        run_test(train_df, train_labels, test_df, test_labels, encoders, model_types)
+        run_test(train_df, train_labels, test_df, test_labels, encoders, model_types, use_best_model_from_val=True)
 
 if __name__ == "__main__":
-    main(do_val=False, do_test=True)
+    main(do_val=True, do_test=True)

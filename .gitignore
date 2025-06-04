@@ -11,7 +11,13 @@ sandbox/torch2npy.py
 sandbox/fiddle.py
 sandbox/fiddle2.py
 
+
+checkpoints
+
 !validation_summary.csv
+!validation_summary_subsampled.csv
+!test_summary.csv
+!test_summary_subsampled.csv
 
 # Python general
 __pycache__/

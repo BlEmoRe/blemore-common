@@ -105,7 +105,9 @@ class Trainer(object):
                     # Save best model
                     self.best_val_score = val_score
                     best_model_path = os.path.join(self.save_dir, f"{save_prefix}_best.pth")
-                    torch.save(self.model.state_dict(), best_model_path)
+                    if val_score > self.best_val_score:
+                        self.best_val_score = val_score
+                        torch.save(self.model, best_model_path)
 
                     best_epoch_stats = {
                         "epoch": epoch + 1,

@@ -14,6 +14,12 @@ class ConfigurableLinearNN(nn.Module):
             n_layers (int): 0, 1, or 2 hidden layers.
             hidden_dim (int): Number of units in each hidden layer.
         """
+
+        self.input_dim = input_dim
+        self.output_dim = output_dim
+        self.n_layers = n_layers
+        self.hidden_dim = hidden_dim
+
         super(ConfigurableLinearNN, self).__init__()
 
         if n_layers not in {0, 1}:
