@@ -81,7 +81,7 @@ Extract features using the provided scripts in feature_extraction/video_encoding
 
 Aggregate features using:
 
-```bash
+```sh
 python feature_extraction/video_encoding/timeseries2aggregate.py
 ```
 
@@ -89,13 +89,13 @@ Train models:
 
 For aggregation-based features:
 
-```bash
+```sh
 python main.py
 ```
 
 For subsampled features:
 
-```bash
+```sh
 python main_subsampling.py
 ```
 
