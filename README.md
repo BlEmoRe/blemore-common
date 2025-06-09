@@ -52,7 +52,7 @@ These baselines serve as a reference for the challenge.
 *Trivial baselines:*  
 <sup>The single emotion baseline always predicts the most frequent single emotion;  
 the blend baseline always predicts the most frequent emotion pair with a fixed salience ratio.  
-They serve as reference points and yield the following accuracies:  
+They serve as reference points and yield the following accuracies for the full validation set: 
 **Single emotion:** Presence = 0.078, Salience = 0.000  
 **Blend:** Presence = 0.057, Salience = 0.035</sup>
 
@@ -64,7 +64,7 @@ They serve as reference points and yield the following accuracies:
 | VideoMAEv2  | Aggregation    | MLP-256    | **0.283**         | **0.093**         |
 
 *Trivial baselines:*  
-<sup>Same strategy as above.  
+<sup>Same strategy as above for test set.  
 **Single emotion:** Presence = 0.074, Salience = 0.000  
 **Blend:** Presence = 0.059, Salience = 0.036</sup>
 
