@@ -71,6 +71,37 @@ Trivial baselines:
   <p><b>Figure 1:</b> Confusion matrix for VideoMAEv2 (Aggregation) model on the test set.</p>
 </div>
 
+### Running the baselines
+To reproduce the baselines:
+
+Download the dataset from [Zenodo](https://zenodo.org/records/15096942) and extract it.
+
+Extract features using the provided scripts in feature_extraction/video_encoding/.
+(Feature extraction pipelines are available for CLIP, ImageBind, VideoMAEv2, and Video Swin Transformer. OpenFace features can be extracted externally.)
+
+Aggregate features using:
+
+```bash
+python feature_extraction/video_encoding/timeseries2aggregate.py
+```
+
+Train models:
+
+For aggregation-based features:
+
+```bash
+python main.py
+```
+
+For subsampled features:
+
+```bash
+python main_subsampling.py
+```
+
+> **Note**: Make sure to update dataset and feature paths in the corresponding scripts before running.
+
+
 ## Tools
 
 ### Filename parser
