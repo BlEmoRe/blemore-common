@@ -2,7 +2,7 @@ import torch
 import numpy as np
 import os
 
-from post_processing import grid_search_thresholds
+from model.post_process import grid_search_thresholds
 from utils.subsample_utils import aggregate_subsamples
 
 class Trainer(object):

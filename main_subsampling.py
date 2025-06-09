@@ -8,8 +8,8 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
 from datasets.subsample_dataset import SubsampledVideoDataset
-from model.models import ConfigurableLinearNN
-from post_processing import get_top_2_predictions, probs2dict
+from model.model import ConfigurableLinearNN
+from model.post_process import get_top_2_predictions, probs2dict
 from trainer import Trainer
 from utils.create_soft_labels import create_labels
 from utils.generic_accuracy.accuracy_funcs import acc_presence_total, acc_salience_total
@@ -34,7 +34,9 @@ hparams = {
     "weight_decay": 1e-3,
 }
 
-data_folder = "/home/user/Work/quantum/data/blemore/"
+# data_folder = "/home/user/Work/quantum/data/blemore/"
+data_folder = "/home/tim/Work/quantum/data/blemore/"
+
 
 train_metadata_path = os.path.join(data_folder, "train_metadata.csv")
 test_metadata_path = os.path.join(data_folder, "test_metadata.csv")
@@ -140,7 +142,7 @@ def run_validation(train_df, train_labels, encoders, model_types):
 
 def run_test(train_df, train_labels, test_df, test_labels, encoders, model_types, use_best_model_from_val=True):
     test_summary_rows = []
-    summary_df = pd.read_csv("validation_summary_subsampled.csv")
+    summary_df = pd.read_csv("data/validation_summary_subsampled.csv")
 
     for encoder in encoders:
         encoding_path = encoding_paths_3d[encoder]
@@ -215,7 +217,7 @@ def main(do_val=True, do_test=True):
         run_validation(train_df, train_labels, encoders, model_types)
 
     if do_test:
-        run_test(train_df, train_labels, test_df, test_labels, encoders, model_types, use_best_model_from_val=True)
+        run_test(train_df, train_labels, test_df, test_labels, encoders, model_types, use_best_model_from_val=False)
 
 if __name__ == "__main__":
-    main(do_val=True, do_test=True)
+    main(do_val=False, do_test=True)

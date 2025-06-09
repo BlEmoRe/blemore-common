@@ -5,7 +5,7 @@ import torch
 
 from config import INDEX_TO_LABEL, NEUTRAL_INDEX
 from utils.generic_accuracy.accuracy_funcs import acc_presence_total, acc_salience_total
-from visualizations import plot_grid_heatmap, summarize_prediction_distribution
+from visualizations.epoch_results import plot_grid_heatmap, summarize_prediction_distribution
 
 
 def get_top_2_predictions(y_pred):

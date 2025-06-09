@@ -16,7 +16,7 @@ LABEL_TO_INDEX = {
     "fea": 2,
     "hap": 3,
     "sad": 4,
-    "neu": 5  # Neutral is included in the label set
+    "neu": 5
 }
 
 NEUTRAL_INDEX = LABEL_TO_INDEX['neu']

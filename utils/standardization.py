@@ -3,7 +3,22 @@ import os
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
+# Only used for visualization purposes
+def standardize_by_group(x, groups):
+    """
+    :param x: a matrix with shape (observations, features)
+    :param groups: np Array
+    :return: scaled x matrix
+    """
+    for group in np.unique(groups):
+        scaler = StandardScaler()
 
+        rows = np.where(groups == group)[0]
+        x[rows] = scaler.fit_transform(x[rows])
+    return x
+
+
+# Used in training / testing settings
 def create_transform(filenames, directory):
     x_array = []
 

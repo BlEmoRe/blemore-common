@@ -3,6 +3,7 @@ import numpy as np
 from collections import Counter
 import pandas as pd
 
+
 def plot_grid_heatmap(grid, metric_index, title, cmap="viridis"):
     """
     Plots a heatmap from the alpha-beta grid.

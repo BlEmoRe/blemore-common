@@ -6,8 +6,8 @@ import torch
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-from model.models import ConfigurableLinearNN
-from post_processing import get_top_2_predictions, probs2dict
+from model.model import ConfigurableLinearNN
+from model.post_process import get_top_2_predictions, probs2dict
 from trainer import Trainer
 from utils.create_soft_labels import create_labels
 from utils.generic_accuracy.accuracy_funcs import acc_presence_total, acc_salience_total
@@ -31,7 +31,8 @@ hparams = {
     "weight_decay": 1e-3,
 }
 
-data_folder = "/home/user/Work/quantum/data/blemore/"
+# data_folder = "/home/user/Work/quantum/data/blemore/"
+data_folder = "/home/tim/Work/quantum/data/blemore/"
 
 train_metadata_path = os.path.join(data_folder, "train_metadata.csv")
 test_metadata_path = os.path.join(data_folder, "test_metadata.csv")
@@ -84,7 +85,7 @@ def train_and_test_from_scratch(train_dataset, test_dataset, model_type, alpha, 
     model.to(device)
 
     trainer = Trainer(model=model, optimizer=optimizer,
-                      data_loader=train_loader, epochs=hparams["num_epochs"],
+                      data_loader=train_loader, epochs=100,
                       subsample_aggregation=False)
 
     trainer.train()
@@ -143,11 +144,11 @@ def run_validation(train_df, train_labels, encoders, model_types):
     return summary_df
 
 
-def run_test(train_df, train_labels, test_df, test_labels, encoders, model_types, use_best_model_from_val=True):
+def run_test(train_df, train_labels, test_df, test_labels, encoders, model_types, use_best_model_from_val=True, use_fold_id=None):
     test_summary_rows = []
 
     # Load validation summary
-    summary_df = pd.read_csv("validation_summary.csv")
+    summary_df = pd.read_csv("data/validation_summary.csv")
 
     for encoder in encoders:
         encoding_path = encoding_paths[encoder]
@@ -172,6 +173,10 @@ def run_test(train_df, train_labels, test_df, test_labels, encoders, model_types
             train_dataset, test_dataset = prepare_split_2d(train_files, train_labels, test_files, test_labels, encoding_path)
 
             if use_best_model_from_val:
+
+                if use_fold_id is not None:
+                    fold_id = use_fold_id
+
                 # Use best model from validation
                 best_model_path = f"checkpoints/{encoder}_{model_type}_fold{fold_id}_best.pth"
                 print(f"Loading model from {best_model_path}")
@@ -220,11 +225,16 @@ def main(do_val=True, do_test=True):
     encoders = ["imagebind", "videomae", "videoswintransformer", "openface", "clip"]
     model_types = ["Linear", "MLP_256", "MLP_512"]
 
+    encoders = ["videomae"]
+    model_types = ["MLP_256"]
+
     if do_val:
         run_validation(train_df, train_labels, encoders, model_types)
 
     if do_test:
-        run_test(train_df, train_labels, test_df, test_labels, encoders, model_types, use_best_model_from_val=True)
+        run_test(train_df, train_labels, test_df, test_labels, encoders, model_types, use_best_model_from_val=False)
 
 if __name__ == "__main__":
-    main(do_val=True, do_test=True)
+    main(do_val=False, do_test=True)
+
+# Try setting number of epochs equal to the best validation run

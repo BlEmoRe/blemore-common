@@ -1,0 +1,2 @@
+encoder,model,alpha,beta,test_acc_presence,test_acc_salience
+videomae,MLP_256,0.05,0.8078947368421052,0.2828282828282828,0.08383233532934131

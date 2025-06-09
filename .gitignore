@@ -1,9 +1,16 @@
-feature_extraction
+
+visualizations/projector_logs_imagebind
+visualizations/projector_logs_imagebind_fea_ang
+visualizations/projector_logs_imagebind_hap_sad
+visualizations/projector_logs_videomae_hap_sad
+
+projector_visualization
 
 *.json
 *.csv
 *.npz
 *.pt
+
 sandbox/inspect.ipynb
 sandbox
 sandbox/torch2npy.py
@@ -11,13 +18,9 @@ sandbox/torch2npy.py
 sandbox/fiddle.py
 sandbox/fiddle2.py
 
-
 checkpoints
 
-!validation_summary.csv
-!validation_summary_subsampled.csv
-!test_summary.csv
-!test_summary_subsampled.csv
+runs
 
 # Python general
 __pycache__/
