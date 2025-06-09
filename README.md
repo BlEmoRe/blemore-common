@@ -68,8 +68,6 @@ They serve as reference points and yield the following accuracies on the full va
 **Single emotion:** Presence = 0.074, Salience = 0.000  
 **Blend:** Presence = 0.059, Salience = 0.036</sup>
 
-### Confusion Matrix
-
 <div align="left">
   <img src="data/plots/confusion_matrix_videomae_test_bigger_fontsize.png" alt="Confusion Matrix" width="600"/>
   <p><b>Figure 1:</b> Confusion matrix for VideoMAEv2 (Aggregation) model on the test set.</p>
