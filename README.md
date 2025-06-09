@@ -89,7 +89,7 @@ Aggregate features using:
 python feature_extraction/video_encoding/timeseries2aggregate.py
 ```
 
-Train models:
+Train models and evaluate models:
 
 For aggregation-based features:
 
