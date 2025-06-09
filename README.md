@@ -49,15 +49,12 @@ These baselines serve as a reference for the challenge.
 | videomae              | Subsampled    | MLP-512    | 0.260 ± 0.030                  | 0.124 ± 0.027                  |
 | videoswintransformer  | Subsampled    | MLP-512    | 0.210 ± 0.024                  | 0.103 ± 0.020                  |
 
-For reference, we also report results from trivial baselines that make constant predictions:
-- The **single emotion baseline** always predicts the most frequent single emotion in the training set.
-- The **blend baseline** always predicts the most frequent emotion pair with a fixed salience ratio.
-
-These baselines provide a lower bound for performance and help contextualize the results of trained models.
-
-Trivial baselines:
-- Single emotion baseline: **Presence Accuracy** = 0.078, **Salience Accuracy** = 0.000
-- Blend baseline: **Presence Accuracy** = 0.057, **Salience Accuracy** = 0.035
+*Trivial baselines:*  
+<sup>The single emotion baseline always predicts the most frequent single emotion;  
+the blend baseline always predicts the most frequent emotion pair with a fixed salience ratio.  
+They serve as reference points and yield the following accuracies:  
+**Single emotion:** Presence = 0.078, Salience = 0.000  
+**Blend:** Presence = 0.057, Salience = 0.035</sup>
 
 ### Test Set Results (Selected Models)
 
@@ -66,9 +63,10 @@ Trivial baselines:
 | ImageBind   | Aggregation    | MLP-512    | 0.261             | 0.087             |
 | VideoMAEv2  | Aggregation    | MLP-256    | **0.283**         | **0.093**         |
 
-Trivial baselines:
-- Single emotion baseline: **Presence Accuracy** = 0.074, **Salience Accuracy** = 0.000
-- Blend baseline: **Presence Accuracy** = 0.059, **Salience Accuracy** = 0.036
+*Trivial baselines:*  
+<sup>Same strategy as above.  
+**Single emotion:** Presence = 0.074, Salience = 0.000  
+**Blend:** Presence = 0.059, Salience = 0.036</sup>
 
 ### Confusion Matrix
 
