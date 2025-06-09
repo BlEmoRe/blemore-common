@@ -1,21 +1,72 @@
 # BlEmoRe-common
 
-Current model with ImageBInd gives imrpovements around 150 epochs. 
+This repository contains the code, baseline models, and results for the Blended Emotion Recognition Challenge (BlEmoRe). 
+The challenge introduces a novel multimodal [dataset](https://zenodo.org/records/15096942) of blended emotion portrayals 
+with fine-grained salience labels and promotes the development of methods capable of recognizing blended emotions from video and audio signals.
 
-Monitor the accuracy on validation sets over time and save the best model. 
+## Baselines
 
-## TODO:
+We provide simple baselines using features from pre-trained models:
 
-1. Create a dataset where the features from VideoSwinTransformer, VideoMAE, and DinoV2 are loaded as subsamples,
-as well as samples. 
-2. Set up training logic that trains on subsamples, but validates on the full sample.
-3. Set up grid search for size of hidden layers on ImageBind, CLIP, and openface aggregate measures. 
+* Frame-based encoders: OpenFace 2.0, CLIP, ImageBind
+* Spatiotemporal encoders: VideoMAEv2, Video Swin Transformer
+
+Features are either:
+
+* Aggregated (mean, std, percentiles) into a single video-level vector, or
+* Subsampled from short video clips (16 frames) without aggregation.
+
+Lightweight feedforward models (Linear, MLP with 256 or 512 hidden units) are trained to predict emotion presence and salience.
+
+These baselines serve as a reference for the challenge.
+
+### Validation Results (Best Models Only)
+
+| Encoder              | Method        | Model      | Presence Accuracy (mean ± std) | Salience Accuracy (mean ± std) |
+|----------------------|---------------|------------|--------------------------------|--------------------------------|
+| clip                  | Aggregation   | MLP-512    | 0.266 ± 0.021                  | 0.105 ± 0.012                  |
+| imagebind             | Aggregation   | MLP-512    | 0.290 ± 0.028                  | 0.130 ± 0.008                  |
+| openface              | Aggregation   | MLP-512    | 0.228 ± 0.014                  | 0.119 ± 0.014                  |
+| videomae              | Aggregation   | MLP-256    | 0.273 ± 0.021                  | 0.110 ± 0.020                  |
+| videoswintransformer  | Aggregation   | MLP-512    | 0.225 ± 0.026                  | 0.089 ± 0.033                  |
+| videomae              | Subsampled    | MLP-512    | 0.260 ± 0.030                  | 0.124 ± 0.027                  |
+| videoswintransformer  | Subsampled    | MLP-512    | 0.210 ± 0.024                  | 0.103 ± 0.020                  |
+
+Trivial baselines:
+- Single emotion baseline: **Presence Accuracy** = 0.078, **Salience Accuracy** = 0.000
+- Blend baseline: **Presence Accuracy** = 0.057, **Salience Accuracy** = 0.035
+
+### Test Set Results (Selected Models)
+
+| Encoder     | Method        | Model      | Presence Accuracy | Salience Accuracy |
+|-------------|---------------|------------|-------------------|-------------------|
+| ImageBind   | Aggregation    | MLP-512    | 0.261             | 0.087             |
+| VideoMAEv2  | Aggregation    | MLP-256    | **0.283**         | **0.093**         |
+
+Trivial baselines:
+- Single emotion baseline: **Presence Accuracy** = 0.074, **Salience Accuracy** = 0.000
+- Blend baseline: **Presence Accuracy** = 0.059, **Salience Accuracy** = 0.036
+
+### Confusion Matrix (VideoMAEv2 Aggregation)
+
+![Confusion Matrix](data/plots/confusion_matrix_videomae_test_bigger_fontsize.png)
+
+### Feature Visualizations
+
+![ImageBind Features](data/plots/pca_imagebind_hap_sad.png)
+
+![VideoMae Features](data/plots/pca_videomae_hap_sad.png)
+
 
 ## Tools
 
+### Filename parser
+
+A utility to parse filenames and extract metadata from the filenames is available in: `utils/filename_parser.py`.
+
 ### Accuracy metrics
 
-Generic functions to calculate the accuracy metrics are available in: `src/tools/generic_accuracy/accuracy_funcs.py`.
+Generic functions to calculate the accuracy metrics are available in: `utils/generic_accuracy/accuracy_funcs.py`.
 These functions rely on predictions provided in the following dictionary format:
 
 ```python
@@ -46,14 +97,6 @@ We employ two main evaluation metrics: `ACC_presence` and `ACC_salience`.
 - `ACC_salience` extends `ACC_presence` by considering the relative prominence of each emotion.
   It evaluates whether the predicted proportions reflect the correct ranking — whether the emotions
   are equally present or one is more dominant than the other. This metric applies only to blended emotions.
-
-### Filename parser
-
-Simple filename parser, provided as a convenience. The filenames and their
-corresponding labels and other metadata is already available in
-the train_metadata.csv on [Zenodo](https://zenodo.org/records/15096942).
-
-## Baselines
 
 ### Simple Baseline (OpenFace + MLP)
 
