@@ -42,9 +42,9 @@ These baselines serve as a reference for the challenge.
 | Encoder              | Method        | Model      | Presence Accuracy (mean ± std) | Salience Accuracy (mean ± std) |
 |----------------------|---------------|------------|--------------------------------|--------------------------------|
 | clip                  | Aggregation   | MLP-512    | 0.266 ± 0.021                  | 0.105 ± 0.012                  |
-| imagebind             | Aggregation   | MLP-512    | 0.290 ± 0.028                  | 0.130 ± 0.008                  |
+| imagebind             | Aggregation   | MLP-512    | **0.290 ± 0.028**                  | **0.130 ± 0.008**                  |
 | openface              | Aggregation   | MLP-512    | 0.228 ± 0.014                  | 0.119 ± 0.014                  |
-| videomae              | Aggregation   | MLP-256    | 0.273 ± 0.021                  | 0.110 ± 0.020                  |
+| videomae              | Aggregation   | MLP-256    | **0.273 ± 0.021**                  | **0.110 ± 0.020**                  |
 | videoswintransformer  | Aggregation   | MLP-512    | 0.225 ± 0.026                  | 0.089 ± 0.033                  |
 | videomae              | Subsampled    | MLP-512    | 0.260 ± 0.030                  | 0.124 ± 0.027                  |
 | videoswintransformer  | Subsampled    | MLP-512    | 0.210 ± 0.024                  | 0.103 ± 0.020                  |
@@ -76,7 +76,7 @@ To reproduce the baselines:
 
 Download the dataset from [Zenodo](https://zenodo.org/records/15096942) and extract it.
 
-Extract features using the provided scripts in feature_extraction/video_encoding/.
+Extract features using the provided scripts in `feature_extraction/video_encoding.py`.
 (Feature extraction pipelines are available for CLIP, ImageBind, VideoMAEv2, and Video Swin Transformer. OpenFace features can be extracted externally.)
 
 Aggregate features using:
