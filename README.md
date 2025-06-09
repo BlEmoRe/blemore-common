@@ -20,6 +20,23 @@ Lightweight feedforward models (Linear, MLP with 256 or 512 hidden units) are tr
 
 These baselines serve as a reference for the challenge.
 
+### Feature Visualizations
+
+<div align="center">
+  <table>
+    <tr>
+      <td>
+        <img src="data/plots/pca_imagebind_hap_sad.png" alt="ImageBind Features" width="400"/>
+        <p><b>Figure 2:</b> PCA projection of ImageBind features (Happy vs Sad).</p>
+      </td>
+      <td>
+        <img src="data/plots/pca_videomae_hap_sad.png" alt="VideoMAEv2 Features" width="400"/>
+        <p><b>Figure 3:</b> PCA projection of VideoMAEv2 features (Happy vs Sad).</p>
+      </td>
+    </tr>
+  </table>
+</div>
+
 ### Validation Results (Best Models Only)
 
 | Encoder              | Method        | Model      | Presence Accuracy (mean ± std) | Salience Accuracy (mean ± std) |
@@ -47,16 +64,12 @@ Trivial baselines:
 - Single emotion baseline: **Presence Accuracy** = 0.074, **Salience Accuracy** = 0.000
 - Blend baseline: **Presence Accuracy** = 0.059, **Salience Accuracy** = 0.036
 
-### Confusion Matrix (VideoMAEv2 Aggregation)
+### Confusion Matrix
 
-![Confusion Matrix](data/plots/confusion_matrix_videomae_test_bigger_fontsize.png)
-
-### Feature Visualizations
-
-![ImageBind Features](data/plots/pca_imagebind_hap_sad.png)
-
-![VideoMae Features](data/plots/pca_videomae_hap_sad.png)
-
+<div align="left">
+  <img src="data/plots/confusion_matrix_videomae_test_bigger_fontsize.png" alt="Confusion Matrix" width="600"/>
+  <p><b>Figure 1:</b> Confusion matrix for VideoMAEv2 (Aggregation) model on the test set.</p>
+</div>
 
 ## Tools
 
@@ -98,45 +111,4 @@ We employ two main evaluation metrics: `ACC_presence` and `ACC_salience`.
   It evaluates whether the predicted proportions reflect the correct ranking — whether the emotions
   are equally present or one is more dominant than the other. This metric applies only to blended emotions.
 
-### Simple Baseline (OpenFace + MLP)
 
-Using a feature-based model (`MultiLabelSoftmaxNN`) trained on [OpenFace 2.2.0](https://github.com/TadasBaltrusaitis/OpenFace) features with a
-softmax + KL-divergence objective. 
-
-* Loss: `KLDivLoss` vs. probabilistic multi-label targets
-* Optimizer: `Adam (lr=0.001, weight_decay=1e-4)`
-* Epochs: `100`
-
-We compare this to a trivial baseline that predicts the most frequent label in the training set.
-
-#### Cross Validation
-
-We provide pre-defined folds in the dataset, the baseline results with the OpenFace + MLP classifier for each fold are as follows:
-
-| Fold | Accuracy (Presence) | Accuracy (Salience) |
-|------|---------------------|---------------------|
-| 0    | 0.24                | 0.14                |
-| 1    | 0.19                | 0.11                |
-| 2    | 0.20                | 0.15                |
-| 3    | 0.22                | 0.10                |
-| 4    | 0.22                | 0.10                |
-
-#### Results on the test set
-
-The results on the test set are as follows:
-
-| Method         | Accuracy (Presence) | Accuracy (Salience) |
-|----------------|---------------------|---------------------|
-| OpenFace + MLP | 0.21                | 0.10                |
-| Trivial        | 0.074               | 0.033               |
-
-
-**Running the baseline code:**
-
-Simple Openface + MLP baseline:
-
-1. Download the data set from [Zenodo](https://zenodo.org/records/15096942)
-2. Extract [OpenFace 2.2.0](https://github.com/TadasBaltrusaitis/OpenFace) features from the videos.
-3. Run the baseline code in `src/baselines/simple/pipeline.py`. Adjust the paths as necessary.
-
-Trivial baseline: `src/baselines/trivial/most_frequent_classifier.py`.
