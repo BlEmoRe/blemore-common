@@ -1,5 +1,5 @@
 import numpy as np
-from utils.openface_operations.config_openface import feature_columns
+from feature_extraction.openface_operations.config_openface import feature_columns
 
 
 def get_success_ratio(df):

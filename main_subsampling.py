@@ -10,7 +10,7 @@ from torch.utils.tensorboard import SummaryWriter
 from datasets.subsample_dataset import SubsampledVideoDataset
 from model.model import ConfigurableLinearNN
 from model.post_process import get_top_2_predictions, probs2dict
-from trainer import Trainer
+from trainer.trainer import Trainer
 from utils.create_soft_labels import create_labels
 from utils.generic_accuracy.accuracy_funcs import acc_presence_total, acc_salience_total
 from utils.set_splitting import prepare_split_subsampled

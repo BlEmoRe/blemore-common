@@ -8,7 +8,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from model.model import ConfigurableLinearNN
 from model.post_process import get_top_2_predictions, probs2dict
-from trainer import Trainer
+from trainer.trainer import Trainer
 from utils.create_soft_labels import create_labels
 from utils.generic_accuracy.accuracy_funcs import acc_presence_total, acc_salience_total
 from utils.set_splitting import prepare_split_2d, get_validation_split
@@ -44,6 +44,7 @@ encoding_paths = {
     "videoswintransformer": os.path.join(data_folder,
                                          "encoded_videos/static_data/videoswintransformer_static_features.npz"),
     "videomae": os.path.join(data_folder, "encoded_videos/static_data/videomae_static_features.npz"),
+    "egemaps": os.path.join(data_folder, "encoded_videos/static_data/egemaps_static_features.npz"),
 }
 
 
@@ -148,7 +149,7 @@ def run_test(train_df, train_labels, test_df, test_labels, encoders, model_types
     test_summary_rows = []
 
     # Load validation summary
-    summary_df = pd.read_csv("data/validation_summary.csv")
+    summary_df = pd.read_csv("validation_summary.csv")
 
     for encoder in encoders:
         encoding_path = encoding_paths[encoder]
@@ -223,10 +224,9 @@ def main(do_val=True, do_test=True):
     test_labels = create_labels(test_df.to_dict(orient="records"))
 
     encoders = ["imagebind", "videomae", "videoswintransformer", "openface", "clip"]
-    model_types = ["Linear", "MLP_256", "MLP_512"]
 
-    encoders = ["videomae"]
-    model_types = ["MLP_256"]
+    # encoders = ["egemaps"]
+    model_types = ["Linear", "MLP_256", "MLP_512"]
 
     if do_val:
         run_validation(train_df, train_labels, encoders, model_types)

@@ -5,8 +5,8 @@ from pathlib import Path
 from glob import glob
 from tqdm import tqdm
 
-from utils.openface_operations.config_openface import feature_columns
-from utils.openface_operations.openface_helpers import (
+from feature_extraction.openface_operations.config_openface import feature_columns
+from feature_extraction.openface_operations.openface_helpers import (
     get_success_ratio,
     get_ok_confidence_ratio,
     interpolate_openface,
