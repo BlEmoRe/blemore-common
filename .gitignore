@@ -4,6 +4,7 @@ visualizations/projector_logs_imagebind_fea_ang
 visualizations/projector_logs_imagebind_hap_sad
 visualizations/projector_logs_videomae_hap_sad
 
+
 projector_visualization
 
 *.json

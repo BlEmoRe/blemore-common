@@ -31,8 +31,8 @@ hparams = {
     "weight_decay": 1e-3,
 }
 
-# data_folder = "/home/user/Work/quantum/data/blemore/"
-data_folder = "/home/tim/Work/quantum/data/blemore/"
+data_folder = "/home/user/Work/quantum/data/blemore/"
+# data_folder = "/home/tim/Work/quantum/data/blemore/"
 
 train_metadata_path = os.path.join(data_folder, "train_metadata.csv")
 test_metadata_path = os.path.join(data_folder, "test_metadata.csv")
@@ -45,6 +45,7 @@ encoding_paths = {
                                          "encoded_videos/static_data/videoswintransformer_static_features.npz"),
     "videomae": os.path.join(data_folder, "encoded_videos/static_data/videomae_static_features.npz"),
     "egemaps": os.path.join(data_folder, "encoded_videos/static_data/egemaps_static_features.npz"),
+    "hubert": os.path.join(data_folder, "encoded_videos/static_data/hubert_static_features.npz"),
 }
 
 
@@ -225,7 +226,7 @@ def main(do_val=True, do_test=True):
 
     encoders = ["imagebind", "videomae", "videoswintransformer", "openface", "clip"]
 
-    # encoders = ["egemaps"]
+    encoders = ["hubert"]
     model_types = ["Linear", "MLP_256", "MLP_512"]
 
     if do_val:
@@ -235,6 +236,6 @@ def main(do_val=True, do_test=True):
         run_test(train_df, train_labels, test_df, test_labels, encoders, model_types, use_best_model_from_val=False)
 
 if __name__ == "__main__":
-    main(do_val=False, do_test=True)
+    main(do_val=True, do_test=True)
 
 # Try setting number of epochs equal to the best validation run

@@ -43,16 +43,19 @@ def aggregate_and_save_npz(source_dir, output_path, suffix=".npy"):
 import os
 
 def main():
-    base_static_dir = "/home/tim/Work/quantum/data/blemore/encoded_videos/static_data"
+    # base_static_dir = "/home/tim/Work/quantum/data/blemore/encoded_videos/static_data"
+    base_static_dir = "/home/user/Work/quantum/data/blemore/encoded_videos/static_data"
+
     os.makedirs(base_static_dir, exist_ok=True)
 
     encoding_paths = {
-        "openface": "/home/tim/Work/quantum/data/blemore/encoded_videos/openface_npy/",
-        "imagebind": "/home/tim/Work/quantum/data/blemore/encoded_videos/ImageBind/",
-        "clip": "/home/tim/Work/quantum/data/blemore/encoded_videos/CLIP_npy/",
+        # "openface": "/home/tim/Work/quantum/data/blemore/encoded_videos/openface_npy/",
+        # "imagebind": "/home/tim/Work/quantum/data/blemore/encoded_videos/ImageBind/",
+        # "clip": "/home/tim/Work/quantum/data/blemore/encoded_videos/CLIP_npy/",
         # "dinov2": "/home/tim/Work/quantum/data/blemore/encoded_videos/dynamic_data/DINOv2_first_component/",
-        "videoswintransformer": "/home/tim/Work/quantum/data/blemore/encoded_videos/VideoSwinTransformer/",
-        "videomae": "/home/tim/Work/quantum/data/blemore/encoded_videos/VideoMAEv2_reshaped/",
+        # "videoswintransformer": "/home/tim/Work/quantum/data/blemore/encoded_videos/VideoSwinTransformer/",
+        # "videomae": "/home/tim/Work/quantum/data/blemore/encoded_videos/VideoMAEv2_reshaped/",
+        "hubert": "/media/user/Seagate Hub/mixed_emotion_challenge/audio_encodings/hubert_large/",
     }
 
     for encoder, path in encoding_paths.items():
