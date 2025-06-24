@@ -179,7 +179,7 @@ We employ two main evaluation metrics: `ACC_presence` and `ACC_salience`.
 
 ## Citation
 
-If you use this code or the dataset in your research, please cite our paper:
+If you use this code or the dataset in your research, please cite the draft version of our paper as a technical report:
 
 ```bibtex
 @techreport{lachmann2025blemore,
