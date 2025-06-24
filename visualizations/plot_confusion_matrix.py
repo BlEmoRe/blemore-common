@@ -72,8 +72,10 @@ def plot_confusion_matrix(final_preds, save_path=None):
 
     plt.show()
 
+# encoder = "wavlm"  # Choose your encoder here
+encoder = "videomae_hubert"
 
-with open(os.path.join(ROOT_DIR, "data/videomae_test_predictions.json"), "r") as f:
+with open(os.path.join(ROOT_DIR, "data/{}_test_predictions.json".format(encoder)), "r") as f:
     p = json.load(f)
 
-plot_confusion_matrix(p, os.path.join(ROOT_DIR, "data/plots/confusion_matrix_videomae_test.png"))
+plot_confusion_matrix(p, os.path.join(ROOT_DIR, "data/plots/confusion_matrix_{}_test.png".format(encoder)))

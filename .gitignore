@@ -1,4 +1,6 @@
 
+!data/submission_template.json
+
 visualizations/projector_logs_imagebind
 visualizations/projector_logs_imagebind_fea_ang
 visualizations/projector_logs_imagebind_hap_sad

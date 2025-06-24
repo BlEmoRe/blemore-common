@@ -1,4 +1,7 @@
 import os
+import json
+from collections import Counter
+
 import random
 import numpy as np
 import pandas as pd
@@ -31,21 +34,29 @@ hparams = {
     "weight_decay": 1e-3,
 }
 
-data_folder = "/home/user/Work/quantum/data/blemore/"
-# data_folder = "/home/tim/Work/quantum/data/blemore/"
+data_folder = "/home/tim/Work/quantum/data/blemore/"
 
 train_metadata_path = os.path.join(data_folder, "train_metadata.csv")
 test_metadata_path = os.path.join(data_folder, "test_metadata.csv")
 
 encoding_paths = {
+    # vision
     "openface": os.path.join(data_folder, "encoded_videos/static_data/openface_static_features.npz"),
     "imagebind": os.path.join(data_folder, "encoded_videos/static_data/imagebind_static_features.npz"),
     "clip": os.path.join(data_folder, "encoded_videos/static_data/clip_static_features.npz"),
     "videoswintransformer": os.path.join(data_folder,
                                          "encoded_videos/static_data/videoswintransformer_static_features.npz"),
     "videomae": os.path.join(data_folder, "encoded_videos/static_data/videomae_static_features.npz"),
-    "egemaps": os.path.join(data_folder, "encoded_videos/static_data/egemaps_static_features.npz"),
+
+    # audio
+    "wavlm": os.path.join(data_folder, "encoded_videos/static_data/wavlm_static_features.npz"),
     "hubert": os.path.join(data_folder, "encoded_videos/static_data/hubert_static_features.npz"),
+
+    # fused
+    "imagebind_wavlm": os.path.join(data_folder, "encoded_videos/static_data/fused/imagebind_wavlm_fused.npz"),
+    "imagebind_hubert": os.path.join(data_folder, "encoded_videos/static_data/fused/imagebind_hubert_fused.npz"),
+    "videomae_wavlm": os.path.join(data_folder, "encoded_videos/static_data/fused/videomae_wavlm_fused.npz"),
+    "videomae_hubert": os.path.join(data_folder, "encoded_videos/static_data/fused/videomae_hubert_fused.npz"),
 }
 
 
@@ -78,7 +89,7 @@ def train_one_fold(train_dataset, val_dataset, model_type, log_dir, save_prefix)
     return best_epoch, best_model_path
 
 
-def train_and_test_from_scratch(train_dataset, test_dataset, model_type, alpha, beta):
+def train_and_test_from_scratch(train_dataset, test_dataset, model_type, alpha, beta, encoder):
     train_loader = DataLoader(train_dataset, batch_size=hparams["batch_size"], shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=hparams["batch_size"], shuffle=False)
 
@@ -92,10 +103,10 @@ def train_and_test_from_scratch(train_dataset, test_dataset, model_type, alpha, 
 
     trainer.train()
 
-    return evaluate_model(model, test_loader, alpha, beta)
+    return evaluate_model(model, test_loader, alpha, beta, encoder)
 
 
-def evaluate_model(model, test_loader, alpha, beta):
+def evaluate_model(model, test_loader, alpha, beta, encoder):
     all_probs = []
     model.eval()
     with torch.no_grad():
@@ -109,6 +120,9 @@ def evaluate_model(model, test_loader, alpha, beta):
     test_filenames = test_loader.dataset.filenames
 
     final_preds = probs2dict(top_2_probs, test_filenames, alpha, beta)
+
+    with open("data/{}_test_predictions.json".format(encoder), "w") as f:
+        json.dump(final_preds, f, indent=4)
 
     acc_presence = acc_presence_total(final_preds)
     acc_salience = acc_salience_total(final_preds)
@@ -189,9 +203,9 @@ def run_test(train_df, train_labels, test_df, test_labels, encoders, model_types
                 model.to(device)
                 test_loader = DataLoader(test_dataset, batch_size=hparams["batch_size"], shuffle=False)
 
-                acc_presence, acc_salience = evaluate_model(model, test_loader, alpha_best, beta_best)
+                acc_presence, acc_salience = evaluate_model(model, test_loader, alpha_best, beta_best, encoder)
             else:
-                acc_presence, acc_salience = train_and_test_from_scratch(train_dataset, test_dataset, model_type, alpha_best, beta_best)
+                acc_presence, acc_salience = train_and_test_from_scratch(train_dataset, test_dataset, model_type, alpha_best, beta_best, encoder)
 
             print(f"Test Accuracy Presence: {acc_presence:.4f}, Salience: {acc_salience:.4f}")
             print(f"Test Accuracy Presence: {acc_presence:.4f}, Salience: {acc_salience:.4f}")
@@ -224,10 +238,13 @@ def main(do_val=True, do_test=True):
     test_df = pd.read_csv(test_metadata_path)
     test_labels = create_labels(test_df.to_dict(orient="records"))
 
-    encoders = ["imagebind", "videomae", "videoswintransformer", "openface", "clip"]
+    vision_encoders = ["imagebind", "videomae", "videoswintransformer", "openface", "clip"]
+    audio_encoders = ["wavlm", "hubert"]
+    encoder_fusions = ["imagebind_wavlm", "imagebind_hubert", "videomae_wavlm", "videomae_hubert"]
+    encoders = vision_encoders + audio_encoders + encoder_fusions
 
-    encoders = ["hubert"]
-    model_types = ["Linear", "MLP_256", "MLP_512"]
+
+    model_types = ["Linear" "MLP_256", "MLP_512"]
 
     if do_val:
         run_validation(train_df, train_labels, encoders, model_types)
@@ -237,5 +254,3 @@ def main(do_val=True, do_test=True):
 
 if __name__ == "__main__":
     main(do_val=True, do_test=True)
-
-# Try setting number of epochs equal to the best validation run
