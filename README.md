@@ -4,7 +4,7 @@ This repository contains the codebase, baseline models, and evaluation tools for
 BlEmoRe introduces a novel publicly available dataset for **multimodal (video + audio) recognition of blended emotions**, featuring fine-grained **salience annotations** and standardized evaluation protocols.
 
 The corresponding draft publication is available in [`paper.pdf`](./paper_draft.pdf).  
-The dataset is available on [Zenodo](https://zenodo.org/records/15096942).
+The dataset is available on [Zenodo](https://zenodo.org/records/15668840).
 
 ## What’s New in BlEmoRe?
 
@@ -16,7 +16,7 @@ The dataset is available on [Zenodo](https://zenodo.org/records/15096942).
 
 ## Submission Guidelines
 
-To participate in the challenge, download the test dataset from [Zenodo](https://zenodo.org/records/15096942) 
+To participate in the challenge, download the test dataset from [Zenodo](https://zenodo.org/records/15668840) 
 and email your predictions in accordance with the [submission template](./data/submission_template.json)
 to the challenge organizer: [Petri Laukka](mailto:petri.laukka@psyk.uu.se). 
 
@@ -104,7 +104,7 @@ To reproduce the baselines:
 
 ### 1. Download dataset
 
-Download the dataset from [Zenodo](https://zenodo.org/records/15096942) and extract it.
+Download the dataset from [Zenodo](https://zenodo.org/records/15668840) and extract it.
 
 ### 2. Extract Features
 
