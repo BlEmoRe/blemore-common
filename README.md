@@ -26,12 +26,12 @@ These baselines serve as a reference for the challenge.
   <table>
     <tr>
       <td>
-        <img src="data/plots/pca_imagebind_hap_sad.png" alt="ImageBind Features" width="400"/>
-        <p><b>Figure 2:</b> PCA projection of ImageBind features (Happy vs Sad).</p>
+        <img src="data/plots/pca_videomae_hap_sad.png.png" alt="VideoMae Features" width="400"/>
+        <p><b>Figure 2:</b> PCA projection of VideoMae features (Happy vs Sad).</p>
       </td>
       <td>
-        <img src="data/plots/pca_videomae_hap_sad.png" alt="VideoMAEv2 Features" width="400"/>
-        <p><b>Figure 3:</b> PCA projection of VideoMAEv2 features (Happy vs Sad).</p>
+        <img src="data/plots/pca_wavlm_hap_sad.png.png" alt="WavLM Features" width="400"/>
+        <p><b>Figure 3:</b> PCA projection of WavLM features (Happy vs Sad).</p>
       </td>
     </tr>
   </table>
