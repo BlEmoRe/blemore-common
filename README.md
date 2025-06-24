@@ -18,7 +18,12 @@ The dataset is available on [Zenodo](https://zenodo.org/records/15668840).
 
 To participate in the challenge, download the test dataset from [Zenodo](https://zenodo.org/records/15668840) 
 and email your predictions in accordance with the [submission template](./data/submission_template.json)
-to the challenge organizer: [Petri Laukka](mailto:petri.laukka@psyk.uu.se). 
+to the challenge organizer: [Petri Laukka](mailto:petri.laukka@psyk.uu.se). We will evaluate them on our server
+and return the results to you.
+
+Papers should be submitted via EasyChair: [Submit via EasyChair](https://easychair.org/conferences?conf=blemoreworkshopacii2).
+
+Deadline for paper submission is **June 30, 2025**.
 
 ## Baseline Models
 
