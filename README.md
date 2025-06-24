@@ -3,7 +3,7 @@
 This repository contains the codebase, baseline models, and evaluation tools for the **Blended Emotion Recognition Challenge (BlEmoRe)**.  
 BlEmoRe introduces a novel publicly available dataset for **multimodal (video + audio) recognition of blended emotions**, featuring fine-grained **salience annotations** and standardized evaluation protocols.
 
-The corresponding draft publication is available in [`paper.pdf`](./paper_draft.pdf).  
+The draft publication is available in [`paper.pdf`](paper.pdf).  
 The dataset is available on [Zenodo](https://zenodo.org/records/15668840).
 
 ## What’s New in BlEmoRe?
@@ -177,4 +177,17 @@ We employ two main evaluation metrics: `ACC_presence` and `ACC_salience`.
   It evaluates whether the predicted proportions reflect the correct ranking — whether the emotions
   are equally present or one is more dominant than the other. This metric applies only to blended emotions.
 
+## Citation
 
+If you use this code or the dataset in your research, please cite our paper:
+
+```bibtex
+@techreport{lachmann2025blemore,
+  title     = {The BlEmoRe Workshop and Competition on Multimodal Blended Emotion Recognition},
+  author    = {Lachmann, Tim and M{\"u}ller, Philipp and Saghinadze, Teimuraz and Balazia, Michal and Israelsson, Alexandra and Laukka, Petri},
+  institution = {Stockholm University, German Research Center for AI, Georgian Technical University, INRIA, Uppsala University},
+  year      = {2025},
+  note      = {Technical Report},
+  url       = {https://zenodo.org/records/15668840}
+}
+```
