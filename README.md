@@ -14,6 +14,12 @@ The dataset is available on [Zenodo](https://zenodo.org/records/15096942).
 - Baselines across visual, audio, and fused modalities
 - Public train/test split and 5-fold validation partitions
 
+## Submission Guidelines
+
+To participate in the challenge, download the test dataset from [Zenodo](https://zenodo.org/records/15096942) 
+and email your predictions in accordance with the [submission template](./data/submission_template.json)
+to the challenge organizer: [Petri Laukka](mailto:petri.laukka@psyk.uu.se). 
+
 ## Baseline Models
 
 We provide baselines trained on features from the following pre-trained encoders:
