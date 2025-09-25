@@ -197,6 +197,12 @@ def main():
     for i in preds.items():
         print(i)
 
+    # Final accuracy check
+    acc_presence = acc_presence_total(preds)
+    acc_salience = acc_salience_total(preds)
+    print(f"Final Presence Accuracy: {acc_presence:.4f}")
+    print(f"Final Salience Accuracy: {acc_salience:.4f}")
+
 
 if __name__ == "__main__":
     main()
