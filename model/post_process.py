@@ -90,9 +90,19 @@ def probs2dict(y_pred,
     return result
 
 
-
 def grid_search_thresholds(filenames, preds, presence_weight=0.5, debug_plots=False):
+    """
+    Perform grid search over presence and salience thresholds to maximize weighted accuracy.
+    :param filenames: list of filenames
+    :param preds: predicted probabilities with rows corresponding to filenames
+    :param presence_weight: optimization weight for presence accuracy vs salience accuracy
+    :param debug_plots: plot heatmaps and prediction distributions if True
+    :return: statistics dictionary with the best thresholds and accuracies
 
+    alpha: best presence threshold (include class if prob >= alpha)
+    beta: best salience threshold (difference to consider equal salience)
+
+    """
     preds = get_top_2_predictions(preds)
     grid = []
 
@@ -140,24 +150,53 @@ def grid_search_thresholds(filenames, preds, presence_weight=0.5, debug_plots=Fa
     }
 
 
-
 def main():
-
     # Example usage
+    # Simulated predicted probabilities for 5 samples and 6 classes
+    # (In practice, replace this with your model's output)
+
+    # assuming the following class order:
+    # LABEL_TO_INDEX = {
+    #     "ang": 0,
+    #     "disg": 1,
+    #     "fea": 2,
+    #     "hap": 3,
+    #     "sad": 4,
+    #     "neu": 5
+    # }
+
     y_pred = np.array([[0.7, 0.1, 0.05, 0.03, 0.02, 0.1],
                        [0.2, 0.6, 0.05, 0.03, 0.02, 0.1],
                        [0.1, 0.1, 0.6, 0.05, 0.05, 0.1],
-                      [0.0, 0.0, 0.0, 0.0, 0.4, 0.6],
+                       [0.0, 0.0, 0.0, 0.0, 0.4, 0.6],
                        [0.9, 0.0, 0.0, 0.0, 0.0, 0.1],
                        ])  # Example predictions
 
+    filenames = ['A405_mix_ang_disg_70_30_ver1',
+                 'A334_mix_disg_fea_50_50_ver1',
+                 'A427_mix_fea_sad_50_50_ver1',
+                 'A303_neu_sit2_ver1',
+                 'A411_ang_int1_ver1']
+
+    stats = grid_search_thresholds(filenames, y_pred)
+
+    print(stats)
+    # Example output (actual values will depend on y_pred):
+    # {'alpha': 0.05, 'beta': 0.05, 'acc_presence': 0.6, 'acc_salience': 0.3333333333333333, 'presence_only': 0.6, 'salience_only': 0.3333333333333333}
+    # acc_presence and acc_salience represent the best accuracies found
+    # at the optimal thresholds alpha and beta
+    # presence_only and salience_only represent the best possible accuracies
+    # if we only optimized for presence or salience respectively
+
+
+
+    # Apply the best thresholds to get final predictions
     y_pred = get_top_2_predictions(y_pred)
 
-    filenames = ["file1", "file2", "file3", "file4", "file5"]
-
-    preds = probs2dict(y_pred, filenames, presence_threshold=0.1, salience_threshold=0.1)
+    preds = probs2dict(y_pred, filenames, presence_threshold=stats["alpha"], salience_threshold=stats["beta"])
     for i in preds.items():
         print(i)
+
 
 if __name__ == "__main__":
     main()

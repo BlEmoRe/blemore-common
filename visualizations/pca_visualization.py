@@ -23,13 +23,15 @@ encoding_paths = {
     "hubert": os.path.join(data_folder, "encoded_videos/static_data/hubert_static_features.npz"),
 }
 
-encoding = "hubert"
+# encoding = "hubert"
 # encoding = "wavlm"  # <-- Choose your encoder here
 
 # encoding = "imagebind"  # <-- Choose your encoder 3here
-# encoding = "videomae"  # <-- Choose your encoder here
+encoding = "videomae"  # <-- Choose your encoder here
 
 save_path = os.path.join(ROOT_DIR, 'data/plots/pca/pca_{}_hap_sad.png'.format(encoding))
+
+all_emotions = {'ang', 'disg', 'fea', 'hap', 'sad'}
 
 # Focus emotions
 focus_emotions = {'sad', 'hap'}  # Only keep these emotions

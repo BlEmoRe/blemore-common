@@ -246,6 +246,9 @@ def main(do_val=True, do_test=True):
 
     model_types = ["Linear" "MLP_256", "MLP_512"]
 
+    encoders = ["videomae"]
+    model_types = ["MLP_512"]
+
     if do_val:
         run_validation(train_df, train_labels, encoders, model_types)
 
