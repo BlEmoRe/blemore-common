@@ -3,7 +3,6 @@
 This repository contains the codebase, baseline models, and evaluation tools for the **Blended Emotion Recognition Challenge (BlEmoRe)**.  
 BlEmoRe introduces a novel publicly available dataset for **multimodal (video + audio) recognition of blended emotions**, featuring fine-grained **salience annotations** and standardized evaluation protocols.
 
-The draft publication is available in [`paper.pdf`](paper.pdf).  
 The dataset is available on [Zenodo](https://zenodo.org/records/15668840).
 
 ## What’s New in BlEmoRe?
@@ -16,20 +15,16 @@ The dataset is available on [Zenodo](https://zenodo.org/records/15668840).
 
 ## Submission Guidelines
 
-Deadline for paper submission is **June 30, 2025**.
-
 To participate in the challenge, download the test dataset from [Zenodo](https://zenodo.org/records/15668840) 
 and email your predictions in accordance with the [submission template](./data/submission_template.json)
 to the challenge organizer: [Petri Laukka](mailto:petri.laukka@psyk.uu.se). We will evaluate them on our server
 and return the results to you.
 
-Papers should be submitted via EasyChair: [Submit via EasyChair](https://easychair.org/conferences?conf=blemoreworkshopacii2).
-
 Note that we have two tracks for submissions:
 - **General Track**: Submissions relevant to the topic of blended emotion recognition, not necessarily using the challenge dataset.
 - **Challenge Track**: Submissions utilizing the challenge dataset and pre-defined evaluation metrics.
 
-More details can be found in the [Call for Papers](https://blemore.github.io/workshop/call-for-papers/).
+More details can be found in the Call for Papers (CFP) document.
 
 ## Baseline Models
 
@@ -188,17 +183,28 @@ We employ two main evaluation metrics: `ACC_presence` and `ACC_salience`.
   It evaluates whether the predicted proportions reflect the correct ranking — whether the emotions
   are equally present or one is more dominant than the other. This metric applies only to blended emotions.
 
-## Citation
+[//]: # (## Citation)
 
-If you use this code or the dataset in your research, please cite the draft version of our paper as a technical report:
+[//]: # ()
+[//]: # (If you use this code or the dataset in your research, please cite the draft version of our paper as a technical report:)
 
-```bibtex
-@techreport{lachmann2025blemore,
-  title     = {The BlEmoRe Workshop and Competition on Multimodal Blended Emotion Recognition},
-  author    = {Lachmann, Tim and M{\"u}ller, Philipp and Saghinadze, Teimuraz and Balazia, Michal and Israelsson, Alexandra and Laukka, Petri},
-  institution = {Stockholm University, German Research Center for AI, Georgian Technical University, INRIA, Uppsala University},
-  year      = {2025},
-  note      = {Technical Report},
-  url       = {https://zenodo.org/records/15668840}
-}
-```
+[//]: # ()
+[//]: # (```bibtex)
+
+[//]: # (@techreport{lachmann2025blemore,)
+
+[//]: # (  title     = {The BlEmoRe Workshop and Competition on Multimodal Blended Emotion Recognition},)
+
+[//]: # (  author    = {Lachmann, Tim and M{\"u}ller, Philipp and Saghinadze, Teimuraz and Balazia, Michal and Israelsson, Alexandra and Laukka, Petri},)
+
+[//]: # (  institution = {Stockholm University, German Research Center for AI, Georgian Technical University, INRIA, Uppsala University},)
+
+[//]: # (  year      = {2025},)
+
+[//]: # (  note      = {Technical Report},)
+
+[//]: # (  url       = {https://zenodo.org/records/15668840})
+
+[//]: # (})
+
+[//]: # (```)
