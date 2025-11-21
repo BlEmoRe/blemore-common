@@ -20,13 +20,9 @@ and email your predictions in accordance with the [submission template](./data/s
 to the challenge organizer: [Petri Laukka](mailto:petri.laukka@psyk.uu.se). We will evaluate them on our server
 and return the results to you.
 
-Note that we have two tracks for submissions:
-- **General Track**: Submissions relevant to the topic of blended emotion recognition, not necessarily using the challenge dataset.
-- **Challenge Track**: Submissions utilizing the challenge dataset and pre-defined evaluation metrics.
-
-More details can be found in the Call for Papers (CFP) document.
-
 ## Baseline Models
+
+Baselines are being updated with the inclusion of additional pre-trained encoders. 
 
 We provide baselines trained on features from the following pre-trained encoders:
 

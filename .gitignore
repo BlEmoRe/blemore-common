@@ -61,6 +61,8 @@ ehthumbs.db
 *.dll
 *.pyd
 
+data/human_eval
+
 # Testing
 .tox/
 .coverage
