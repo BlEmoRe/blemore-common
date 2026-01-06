@@ -57,6 +57,9 @@ encoding_paths = {
     "imagebind_hubert": os.path.join(data_folder, "encoded_videos/static_data/fused/imagebind_hubert_fused.npz"),
     "videomae_wavlm": os.path.join(data_folder, "encoded_videos/static_data/fused/videomae_wavlm_fused.npz"),
     "videomae_hubert": os.path.join(data_folder, "encoded_videos/static_data/fused/videomae_hubert_fused.npz"),
+
+    # multimodal
+    "hicmae": os.path.join(data_folder, "encoded_videos/static_data/hicmae_static_features.npz"),
 }
 
 
@@ -164,7 +167,7 @@ def run_test(train_df, train_labels, test_df, test_labels, encoders, model_types
     test_summary_rows = []
 
     # Load validation summary
-    summary_df = pd.read_csv("validation_summary.csv")
+    summary_df = pd.read_csv("data/validation_summary_hicmae.csv")
 
     for encoder in encoders:
         encoding_path = encoding_paths[encoder]
@@ -246,8 +249,8 @@ def main(do_val=True, do_test=True):
 
     model_types = ["Linear" "MLP_256", "MLP_512"]
 
-    encoders = ["videomae"]
-    model_types = ["MLP_512"]
+    encoders = ["hicmae"]
+    model_types = ["Linear"]
 
     if do_val:
         run_validation(train_df, train_labels, encoders, model_types)
