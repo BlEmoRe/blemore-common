@@ -234,7 +234,7 @@ def run_test(train_df, train_labels, test_df, test_labels, encoders, model_types
     print(test_summary_df.groupby(["encoder", "model"])[["test_acc_presence", "test_acc_salience"]].mean())
 
 
-def main(do_val=True, do_test=True):
+def main(do_val=True, do_test=False):
     train_df = pd.read_csv(train_metadata_path)
     train_labels = create_labels(train_df.to_dict(orient="records"))
 
@@ -246,11 +246,7 @@ def main(do_val=True, do_test=True):
     encoder_fusions = ["imagebind_wavlm", "imagebind_hubert", "videomae_wavlm", "videomae_hubert"]
     encoders = vision_encoders + audio_encoders + encoder_fusions
 
-
     model_types = ["Linear" "MLP_256", "MLP_512"]
-
-    encoders = ["hicmae"]
-    model_types = ["Linear"]
 
     if do_val:
         run_validation(train_df, train_labels, encoders, model_types)
@@ -259,4 +255,4 @@ def main(do_val=True, do_test=True):
         run_test(train_df, train_labels, test_df, test_labels, encoders, model_types, use_best_model_from_val=False)
 
 if __name__ == "__main__":
-    main(do_val=True, do_test=True)
+    main(do_val=True, do_test=False)
