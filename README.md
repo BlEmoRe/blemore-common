@@ -179,28 +179,17 @@ We employ two main evaluation metrics: `ACC_presence` and `ACC_salience`.
   It evaluates whether the predicted proportions reflect the correct ranking — whether the emotions
   are equally present or one is more dominant than the other. This metric applies only to blended emotions.
 
-[//]: # (## Citation)
+# Citation
 
-[//]: # ()
-[//]: # (If you use this code or the dataset in your research, please cite the draft version of our paper as a technical report:)
-
-[//]: # ()
-[//]: # (```bibtex)
-
-[//]: # (@techreport{lachmann2025blemore,)
-
-[//]: # (  title     = {The BlEmoRe Workshop and Competition on Multimodal Blended Emotion Recognition},)
-
-[//]: # (  author    = {Lachmann, Tim and M{\"u}ller, Philipp and Saghinadze, Teimuraz and Balazia, Michal and Israelsson, Alexandra and Laukka, Petri},)
-
-[//]: # (  institution = {Stockholm University, German Research Center for AI, Georgian Technical University, INRIA, Uppsala University},)
-
-[//]: # (  year      = {2025},)
-
-[//]: # (  note      = {Technical Report},)
-
-[//]: # (  url       = {https://zenodo.org/records/15668840})
-
-[//]: # (})
-
-[//]: # (```)
+arXiv citation below:
+```bibtex
+@misc{lachmann2026blendsequalblemoredataset,
+      title={Not all Blends are Equal: The BLEMORE Dataset of Blended Emotion Expressions with Relative Salience Annotations}, 
+      author={Tim Lachmann and Alexandra Israelsson and Christina Tornberg and Teimuraz Saghinadze and Michal Balazia and Philipp Müller and Petri Laukka},
+      year={2026},
+      eprint={2601.13225},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2601.13225}, 
+}
+```
