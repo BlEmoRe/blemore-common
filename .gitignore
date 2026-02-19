@@ -10,9 +10,10 @@ projector_visualization
 *.csv
 *.npz
 *.pt
+*.zip
 
 !data/submission_template.json
-
+!data/submission_template_codabench.zip
 
 sandbox/inspect.ipynb
 sandbox
