@@ -16,9 +16,7 @@ The dataset is available on [Zenodo](https://zenodo.org/records/17787362).
 ## Submission Guidelines
 
 To participate in the challenge, download the test dataset from [Zenodo](https://zenodo.org/records/17787362) 
-and email your predictions in accordance with the [submission template](./data/submission_template.json)
-to the challenge organizer: [Petri Laukka](mailto:petri.laukka@psyk.uu.se). We will evaluate them on our server
-and return the results to you.
+and submit your predictions to [CodaBench](https://www.codabench.org/competitions/14051) using the [submission template](./data/submission_template_codabench.zip).
 
 ## Baseline Models
 
